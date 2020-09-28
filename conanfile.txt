@@ -1,7 +1,6 @@
 [requires]
-imgui-sfml/2.1@bincrafters/stable
+sfml/2.5.1@bincrafters/stable
 catch2/2.13.0
-doctest/2.4.0
 docopt.cpp/0.6.2
 fmt/7.0.3
 spdlog/1.7.0
