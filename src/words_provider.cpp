@@ -5,6 +5,8 @@
 #include <fmt/core.h>
 #include <fmt/color.h>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 WordsProvider::WordsProvider() 
     : WordsProvider{"../assets/google-1000-english.txt"}
@@ -31,12 +33,8 @@ WordsProvider::WordsProvider(std::string filename)
 
 
 const std::string& WordsProvider::get_word() const {
-    int idx = get_rand_int_uniform();
+    auto idx = get_rand_idx_uniform();
     return _words.at(idx);
-}
-
-int WordsProvider::num_of_words() const {
-    return _words.size();
 }
 
 void WordsProvider::print_words() const {
@@ -47,13 +45,13 @@ void WordsProvider::print_words() const {
 }
 
 // private
-int WordsProvider::get_rand_int_uniform() const {
+long unsigned int WordsProvider::get_rand_idx_uniform() const {
     // Seed with a real random value, if available
     static std::random_device r;
  
     static std::default_random_engine e1(r());
-    static const int upper_limit = std::max<int>(0, _words.size()-1);  //prevent segfault by invalid dist range
-    static std::uniform_int_distribution<int> uniform_dist(0, upper_limit);
+    static const auto upper_limit = std::max<long unsigned int>(0, num_of_words()-1);  //prevent invalid dist range
+    static std::uniform_int_distribution<long unsigned int> uniform_dist(0, upper_limit);
  
     // Generate a normal distribution around that mean
     static std::seed_seq seed2{r(), r(), r(), r(), r(), r(), r(), r()}; 

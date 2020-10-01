@@ -12,12 +12,14 @@ public:
     explicit WordsProvider(std::string filename);
 
     [[nodiscard]] const std::string& get_word() const;
-    [[nodiscard]] int num_of_words() const;
+    [[nodiscard]] auto num_of_words() const {
+        return _words.size();
+    }
 
     void print_words() const;
 
 private:
-    [[nodiscard]] int get_rand_int_uniform() const;
+    [[nodiscard]] long unsigned int get_rand_idx_uniform() const;
 
     const std::string _filename;
     std::vector<std::string> _words;
