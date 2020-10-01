@@ -1,15 +1,23 @@
 cmake_minimum_required(VERSION 3.16)
 project(SpeedTyper VERSION 1.0)
 
-add_definitions("-std=c++2a")
+include(cmake/StandardProjectSettings.cmake)
+
+# Link this 'library' to set the c++ standard / compile-time options requested
+add_library(project_options INTERFACE)
+target_compile_features(project_options INTERFACE cxx_std_20)
+
+# Link this 'library' to use the warnings specified in CompilerWarnings.cmake
+add_library(project_warnings INTERFACE)
+include(cmake/CompilerWarnings.cmake)
+set_project_warnings(project_warnings)
 
 # conan
 include(cmake/Conan.cmake)
 run_conan()
 # conan_basic_setup()
 
-include_directories(include)
-
+add_subdirectory(src)
 
 option(ENABLE_TESTING "Enable Test Builds" ON)
 if(ENABLE_TESTING)
@@ -17,8 +25,3 @@ if(ENABLE_TESTING)
   message("Building Tests.")
   add_subdirectory(test)
 endif()
-
-add_subdirectory(src)
-
-# create compile_commands.json
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

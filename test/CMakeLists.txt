@@ -9,7 +9,7 @@ add_library(catch_main STATIC catch_main.cpp)
 target_link_libraries(catch_main PUBLIC CONAN_PKG::catch2)
 
 add_executable(tests tests.cpp)
-target_link_libraries(tests PRIVATE catch_main words_provider CONAN_PKG::fmt)
+target_link_libraries(tests PRIVATE project_options project_warnings words_provider catch_main CONAN_PKG::fmt)
 
 # automatically discover tests that are defined in catch based test files you can modify the unittests. TEST_PREFIX to
 # whatever you want, or use different for different binaries
