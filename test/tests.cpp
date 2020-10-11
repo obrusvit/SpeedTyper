@@ -15,7 +15,7 @@ TEST_CASE("Factorials are computed", "[factorial]")
 }
 
 #include <fmt/core.h>
-#include "words_provider.hpp"
+#include "../src/WordsProvider.h"
 
 TEST_CASE("Words provider works as intented."){
 

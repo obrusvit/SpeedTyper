@@ -1,4 +1,4 @@
-#include "words_provider.hpp"
+#include "WordsProvider.h"
 #include <fstream>
 #include <algorithm>
 #include <random>
