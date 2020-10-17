@@ -1,7 +1,11 @@
+#ifndef SPEED_TYPER_WORD_ENTITY
+#define SPEED_TYPER_WORD_ENTITY
+
 #include <string> 
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/Text.hpp"
+
 
 class WordEntity {
   public:
@@ -15,13 +19,14 @@ class WordEntity {
         untouched        // displayed word which will be typed in the future
     };
 
+    void draw_word_entity(sf::RenderWindow& win) const;
+
     void set_state(State st);
 
     void set_position(float x, float y);
-
     void set_position(sf::Vector2f pos);
 
-    void draw_word_entity(sf::RenderWindow& win) const;
+    static auto get_font_size()  { return _font_sz; }
 
     auto get_position() const { return _text_border.getPosition(); }
 
@@ -45,3 +50,4 @@ class WordEntity {
                                                unsigned int font_sz) const;
 };
 
+#endif /* ifndef SPEED_TYPER_WORD_ENTITY */

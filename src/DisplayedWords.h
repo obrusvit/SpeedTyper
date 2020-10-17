@@ -1,3 +1,6 @@
+#ifndef SPEED_TYPER_DISPLAYED_WORDS
+#define SPEED_TYPER_DISPLAYED_WORDS
+
 #include <vector>
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
@@ -7,7 +10,7 @@
 class DisplayedWords {
 
   public:
-    DisplayedWords(unsigned int X, unsigned int Y, const sf::Font& font, unsigned int font_sz);
+    explicit DisplayedWords(const sf::Font& font);
 
     const WordEntity& get_current_word() const {
         return _all_words.at(static_cast<std::vector<WordEntity>::size_type>(_current_word_idx));
@@ -26,16 +29,15 @@ class DisplayedWords {
     void draw_word_collection(sf::RenderWindow& win) const;
 
   private:
-    unsigned int _win_X;
-    unsigned int _win_Y;
     const float _X{20.0F};
     const float _Y{20.0F};
     const float _Y_draw_boundary{200.0F};
     sf::Font _font;
-    unsigned int _font_sz;
 
     std::vector<WordEntity> _all_words;
     const int _num_words_ahead{1'000};
     int _current_word_idx{0};
     WordsProvider _wp{};
 };
+
+#endif /* ifndef SPEED_TYPER_DISPLAYED_WORDS */

@@ -1,25 +1,25 @@
 #include "DisplayedWords.h"
 #include "constants.h"
 
-DisplayedWords::DisplayedWords(unsigned int X, unsigned int Y, const sf::Font& font, unsigned int font_sz)
-    : _win_X{X}, _win_Y{Y}, _font{font}, _font_sz{font_sz} {
+DisplayedWords::DisplayedWords(const sf::Font& font) : _font{font} {
     float x_start = _X;
     float y_start = _Y;
-    auto space_advance = _font.getGlyph(ST_ASCII_values::key_space, _font_sz, false).advance;
+    auto space_advance =
+        _font.getGlyph(speedtyper::ASCII_values::key_space, speedtyper::GUI_options::FONT_SZ, false)
+            .advance;
     for (int i = 0; i < _num_words_ahead; ++i) {
         auto word_entity = WordEntity(x_start, y_start, _wp.get_word(), _font);
         auto delta_x = word_entity.get_width_of_bbox() + space_advance;
-        if (x_start + delta_x > static_cast<float>(_win_X)) {
+        if (x_start + delta_x > static_cast<float>(speedtyper::GUI_options::win_sz_X)) {
             // this word spills out of main window so put it to new line
             x_start = _X;
-            y_start += _font.getLineSpacing(font_sz);
+            y_start += _font.getLineSpacing(speedtyper::GUI_options::FONT_SZ);
             word_entity.set_position(x_start, y_start);
         }
         x_start += delta_x;
         _all_words.push_back(word_entity);
     }
 }
-
 
 void DisplayedWords::update(const std::string& s) {
     auto& current_word = get_current_word();
@@ -48,7 +48,7 @@ void DisplayedWords::next_word(const std::string& previous) {
 void DisplayedWords::move_all_words_line_up() {
     for (auto& word : _all_words) {
         auto [x, y] = word.get_position();
-        word.set_position(x, y - _font.getLineSpacing(_font_sz));
+        word.set_position(x, y - _font.getLineSpacing(speedtyper::GUI_options::FONT_SZ));
     }
 }
 

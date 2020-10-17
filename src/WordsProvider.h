@@ -1,5 +1,5 @@
-#ifndef GUARD_SPEED_TYPER_WORDS_PROVIDER
-#define GUARD_SPEED_TYPER_WORDS_PROVIDER
+#ifndef SPEED_TYPER_WORDS_PROVIDER
+#define SPEED_TYPER_WORDS_PROVIDER
 
 #include <string>
 #include <vector>
@@ -25,5 +25,4 @@ private:
     std::vector<std::string> _words;
 };
 
-#endif
-
+#endif  /* ifndef SPEED_TYPER_WORDS_PROVIDER */
