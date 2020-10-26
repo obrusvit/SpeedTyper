@@ -20,13 +20,18 @@ class DisplayedWords {
         return _all_words.at(static_cast<std::vector<WordEntity>::size_type>(_current_word_idx));
     }
 
-    void update(const std::string& s); 
+    void create_words();
 
-    void next_word(const std::string& previous);
+    void draw_word_collection(sf::RenderWindow& win) const;
 
     void move_all_words_line_up(); 
 
-    void draw_word_collection(sf::RenderWindow& win) const;
+    void next_word(const std::string& previous);
+
+    void update(const std::string& s); 
+
+    void reset();
+
 
   private:
     const float _X{20.0F};

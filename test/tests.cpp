@@ -1,6 +1,7 @@
 #include "../src/DisplayedWords.h"
 #include "../src/WordEntity.h"
 #include "../src/WordsProvider.h"
+#include "../src/Timer.h"
 #include "SFML/Config.hpp"
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/System/Vector2.hpp"
@@ -8,17 +9,8 @@
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <string>
+#include <thread>
 
-unsigned int Factorial(unsigned int number) {
-    return number <= 1 ? number : Factorial(number - 1) * number;
-}
-
-TEST_CASE("Factorials are computed", "[factorial]") {
-    REQUIRE(Factorial(1) == 1);
-    REQUIRE(Factorial(2) == 2);
-    REQUIRE(Factorial(3) == 6);
-    REQUIRE(Factorial(10) == 3628800);
-}
 
 TEST_CASE("Words provider works as intented.") {
 
@@ -82,4 +74,91 @@ TEST_CASE("DisplayedWords") {
         DisplayedWords dw{font};
         dw.get_current_word().get_string();
     }
+}
+
+TEST_CASE("Timer") {
+    using speedtyper::Timer;
+    using namespace std::chrono_literals;
+    constexpr auto initial_val = 42;
+    SECTION("Timer will do correct timeout outcome."){
+        auto num_for_test = initial_val;
+        auto add_two_to_captured = [&num_for_test](){
+            num_for_test += 2;
+        };
+        Timer t1;
+        [[maybe_unused]] auto id_1 = t1.set_timeout(add_two_to_captured, 100ms);
+        std::this_thread::sleep_for(200ms);
+        REQUIRE(num_for_test == initial_val + 2);
+    }
+
+    SECTION("Timer timeout callback can be disabled."){
+        auto num_for_test = initial_val;
+        auto add_two_to_captured = [&num_for_test](){
+            num_for_test += 2;
+        };
+        Timer t1;
+        auto id_1 = t1.set_timeout(add_two_to_captured, 100ms);
+        std::this_thread::sleep_for(50ms);
+        t1.disable(id_1);
+        std::this_thread::sleep_for(100ms);
+        REQUIRE(num_for_test == initial_val);  
+    }
+
+    SECTION("Replace the task of the timer."){
+        auto num_for_test = initial_val;
+        auto add_two_to_captured = [&num_for_test](){
+            num_for_test += 2;
+        };
+        auto add_four_to_captured = [&num_for_test](){
+            num_for_test += 4;
+        };
+        Timer t1;
+        auto id_1 = t1.set_timeout(add_two_to_captured, 100ms);
+        std::this_thread::sleep_for(50ms);
+        t1.disable(id_1);
+        [[maybe_unused]]auto id_2 = t1.set_timeout(add_four_to_captured, 100ms);
+        std::this_thread::sleep_for(200ms);
+
+        REQUIRE(num_for_test == initial_val+4);  
+    }
+
+    SECTION("Replace the task of the timer several times."){
+        auto num_for_test = initial_val;
+        auto add_two_to_captured = [&num_for_test](){
+            num_for_test += 2;
+        };
+        auto add_four_to_captured = [&num_for_test](){
+            num_for_test += 4;
+        };
+        auto add_six_to_captured = [&num_for_test](){
+            num_for_test += 6;
+        };
+        Timer t1;
+        auto id_1 = t1.set_timeout(add_two_to_captured, 100ms);
+        std::this_thread::sleep_for(50ms);
+        t1.disable(id_1);
+        auto id_2 = t1.set_timeout(add_four_to_captured, 100ms);
+        std::this_thread::sleep_for(50ms);
+        t1.disable(id_2);
+        [[maybe_unused]]auto id_3 = t1.set_timeout(add_six_to_captured, 100ms);
+        std::this_thread::sleep_for(200ms);
+
+        REQUIRE(num_for_test == initial_val+6);  
+    }
+    SECTION("Timer can handle more than one task.") {
+        auto num_for_test = initial_val;
+        auto add_two_to_captured = [&num_for_test](){
+            num_for_test += 2;
+        };
+        auto add_four_to_captured = [&num_for_test](){
+            num_for_test += 4;
+        };
+        Timer t1;
+        [[maybe_unused]] auto id_1 = t1.set_timeout(add_two_to_captured, 50ms);
+        [[maybe_unused]] auto id_2 = t1.set_timeout(add_four_to_captured, 50ms);
+        std::this_thread::sleep_for(100ms);
+        REQUIRE(num_for_test == initial_val + 2 + 4);
+
+    }
+
 }

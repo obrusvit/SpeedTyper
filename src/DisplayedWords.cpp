@@ -2,6 +2,10 @@
 #include "constants.h"
 
 DisplayedWords::DisplayedWords(const sf::Font& font) : _font{font} {
+    create_words();
+}
+
+void DisplayedWords::create_words(){
     float x_start = _X;
     float y_start = _Y;
     auto space_advance =
@@ -59,4 +63,10 @@ void DisplayedWords::draw_word_collection(sf::RenderWindow& win) const {
             word_entity.draw_word_entity(win);
         }
     }
+}
+
+void DisplayedWords::reset(){
+    _all_words.clear();
+    _current_word_idx = 0;
+    create_words();
 }

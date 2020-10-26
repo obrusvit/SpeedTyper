@@ -10,6 +10,12 @@ class InputField {
 
     void draw_input_field(sf::RenderWindow& win) const;
 
+    auto get_position() const { return _input_field_bg.getPosition(); }
+
+    auto get_size() const { return _input_field_bg.getSize(); }
+
+    void reset() { _input_field.setString(""); }
+
     void set_string(const std::string& s);
 
     void set_bg_color(const sf::Color& color);

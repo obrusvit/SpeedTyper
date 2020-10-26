@@ -15,11 +15,12 @@ namespace GUI_options {
     constexpr unsigned int win_sz_X = 1024;
     constexpr unsigned int win_sz_Y = 768;
     constexpr unsigned int FONT_SZ = 30;
-    constexpr int FPS_LIMIT = 120;
-}
+    constexpr int FPS_LIMIT = 30;
+
+} // namespace GUI_options
 
 namespace gameopt {
-    constexpr unsigned int seconds_limit = 5;
+    constexpr unsigned int seconds_limit = 20;
 
 } // namespace gameopt
 
