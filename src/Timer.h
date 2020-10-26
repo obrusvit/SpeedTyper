@@ -50,10 +50,9 @@ class Timer {
                return; 
             }
             std::this_thread::sleep_for(timeout);
-            if ( ! this->map_check_active(new_id)) {
-                return;
+            if ( this->map_check_active(new_id)) {
+                func();
             }
-            func();
             this->map_remove(new_id);
         });
         t.detach();

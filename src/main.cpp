@@ -29,6 +29,7 @@
 #include "DisplayedWords.h"
 #include "InputField.h"
 #include "Score.h"
+#include "Timer.h"
 #include "constants.h"
 
 void handle_backspace(Score& score, DisplayedWords& display, std::ostringstream& oss) {
@@ -42,6 +43,7 @@ void handle_backspace(Score& score, DisplayedWords& display, std::ostringstream&
     oss.clear();
     oss.seekp(0, std::ios_base::end); // set writing to the end
     score.backspaces++;
+    score.key_presses++;
     display.update(oss.str());
 }
 
@@ -65,42 +67,8 @@ void handle_written_char(Score& score, DisplayedWords& display, std::ostringstre
     }
 }
 
+
 enum class SpeedTyperStatus { waiting_for_start, running, finished, showing_results };
-
-void func_timer(std::atomic<SpeedTyperStatus>& ts) {
-    using namespace std::chrono_literals;
-    fmt::print("func_timer, start\n");
-    std::chrono::seconds test_time{speedtyper::gameopt::seconds_limit};
-    std::this_thread::sleep_for(test_time);
-    ts = SpeedTyperStatus::finished;
-    fmt::print("func_timer, done\n");
-}
-
-void show_results(const Score& score){
-    /*
-     * {[index]:[format_specifier]}
-     * format_specifier:
-     * [[fill]align][sign][#]{0}[width][.precision][type]
-     */
-    constexpr auto report_width = 30;
-    constexpr auto number_width =  6;
-    constexpr auto description_width =  report_width - number_width;
-    fmt::print("\n{0:_^{1}}\n","Words", report_width);
-    fmt::print(fg(fmt::color::green), "{0:.<{2}}{1:.>{3}}\n", "Correct:",   score.words_correct, description_width, number_width);
-    fmt::print(fg(fmt::color::red),   "{0:.<{2}}{1:.>{3}}\n", "Incorrect:", score.words_bad, description_width, number_width);
-    fmt::print("\n{0:_^{1}}\n", "Keys", report_width);
-    auto chars_typed = fmt::format(fg(fmt::color::green), "{0}", score.chars_correct) 
-        + fmt::format("|")
-        + fmt::format(fg(fmt::color::red), "{0}", score.chars_bad);
-    fmt::print(fg(fmt::color::gray),  "{0:.<{2}}{1:.>{3}}\n", "Key presses:", chars_typed, description_width, number_width);
-    fmt::print(fg(fmt::color::gray),  "{0:.<{2}}{1:.>{3}.3}\n", "Accuracy:",  score.calculate_accuracy(), description_width, number_width);
-    fmt::print(fg(fmt::color::gray),  "{0:.<{2}}{1:.>{3}}\n", "Total key presses:",  score.key_presses, description_width, number_width);
-    fmt::print(fg(fmt::color::red),   "{0:.<{2}}{1:.>{3}}\n", "Backspace:",   score.backspaces, description_width, number_width);
-    fmt::print("\n{0:_^{1}}\n", "Summary", report_width);
-    fmt::print(fg(fmt::color::gray),  "{0:.<{2}}{1:.>{3}}\n", "CPM:", score.calculate_cpm(), description_width, number_width);
-    fmt::print(fg(fmt::color::gray) | fmt::emphasis::bold,  "{0:.<{2}}{1:.>{3}}\n", "WPM:", score.calculate_wpm(), description_width, number_width);
-
-}
 
 
 void rendering_function(sf::RenderWindow& window, DisplayedWords& displayed_words, InputField& input_field, sf::RectangleShape& reset_button, sf::Text& reset_text) {
@@ -166,8 +134,8 @@ int main() {
     //------------------------------------------------------------------------------
 
     std::ostringstream oss{};
-    std::thread timer_thread;
     speedtyper::Timer timer;
+    int timer_current_id = 0;
     std::atomic<SpeedTyperStatus> typer_status = SpeedTyperStatus::waiting_for_start;
 
     //------------------------------------------------------------------------------
@@ -180,19 +148,20 @@ int main() {
 
     auto reset_button_hover = [&window, &reset_button]() {
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-        sf::Vector2f mousePosF(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y));
+        sf::Vector2f mousePosF{static_cast<float>(mousePos.x), static_cast<float>(mousePos.y)};
         return reset_button.getGlobalBounds().contains(mousePosF);
+    };
+
+    auto func_timeout = [&typer_status](){
+        typer_status = SpeedTyperStatus::finished;
     };
 
     auto reset_speed_typer = [&]() {
         displayed_words.reset();
         input_field.reset();
         score.reset();
-        if (timer_thread.joinable()){
-            timer_thread.detach();
-        }
-        // FIXME detached thread still have typer_status ref
-        timer_thread = std::thread();
+        oss.str("");
+        timer.disable(timer_current_id);
         typer_status = SpeedTyperStatus::waiting_for_start;
     };
 
@@ -202,10 +171,6 @@ int main() {
         sf::Event event{};
         while (window.waitEvent(event)) {
             if (event.type == sf::Event::Closed) {
-                if (timer_thread.joinable()) {
-                    // if the thread started already
-                    timer_thread.detach();
-                }
                 window.close();
             }
 
@@ -239,8 +204,10 @@ int main() {
                     break;
                 default:
                     if (typer_status == SpeedTyperStatus::waiting_for_start) {
+                        using namespace std::chrono;
+                        auto timeout = duration_cast<milliseconds>(seconds(speedtyper::gameopt::seconds_limit));
                         typer_status = SpeedTyperStatus::running;
-                        timer_thread = std::thread{func_timer, std::ref(typer_status)};
+                        timer_current_id = timer.set_timeout(func_timeout, timeout);
                     }
                     handle_written_char(score, displayed_words, oss, unicode);
                     break;
@@ -250,13 +217,6 @@ int main() {
         }
     }
 
-    //------------------------------------------------------------------------------
-
-    if (timer_thread.joinable()) {
-        //prevent segfault if thread was detached because we closed the window before times up
-        //prevent error if you close the window before typing anything
-        timer_thread.join();
-    }
     render_thread.join();
 
     return 0;

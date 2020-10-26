@@ -14,7 +14,10 @@ class InputField {
 
     auto get_size() const { return _input_field_bg.getSize(); }
 
-    void reset() { _input_field.setString(""); }
+    void reset() { 
+        _input_field_bg.setFillColor(sf::Color::White);
+        _input_field.setString(""); 
+    }
 
     void set_string(const std::string& s);
 
