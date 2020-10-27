@@ -13,8 +13,7 @@ target_link_libraries(tests
     PRIVATE
     project_options project_warnings
     words_provider
-    word_entity
-    displayed_words
+    sfml_components
     catch_main CONAN_PKG::fmt)
 
 # automatically discover tests that are defined in catch based test files you can modify the unittests. TEST_PREFIX to

@@ -2,7 +2,12 @@
 #define SPEED_TYPER_SCORE
 
 #include "constants.h"
+#include "fmt/core.h"
+#include "fmt/color.h"
+
 #include <string>
+
+namespace speedtyper{
 
 struct Score {
     int words_correct{0};
@@ -55,8 +60,9 @@ struct Score {
         static constexpr auto avg_word_len = 5;
 };
 
+}  // namespace speedtyper
 
-void show_results(const Score& score){
+void show_results(const speedtyper::Score& score){
     /*
      * {[index]:[format_specifier]}
      * format_specifier:

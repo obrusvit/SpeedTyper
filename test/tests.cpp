@@ -1,6 +1,5 @@
-#include "../src/DisplayedWords.h"
-#include "../src/WordEntity.h"
 #include "../src/WordsProvider.h"
+#include "../src/SfmlComponents.h"
 #include "../src/Timer.h"
 #include "SFML/Config.hpp"
 #include "SFML/Graphics/Font.hpp"
@@ -47,6 +46,7 @@ auto load_font() {
 }
 
 TEST_CASE("WordEntity") {
+    using speedtyper::WordEntity;
     SECTION("Init and placement") {
         using namespace std::string_literals; // for ""s to create string
         auto text = "Hello"s;
@@ -69,6 +69,7 @@ TEST_CASE("WordEntity") {
 }
 
 TEST_CASE("DisplayedWords") {
+    using speedtyper::DisplayedWords;
     SECTION("Init") {
         auto font = load_font();
         DisplayedWords dw{font};
