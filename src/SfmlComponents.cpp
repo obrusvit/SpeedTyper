@@ -1,5 +1,6 @@
 #include "SfmlComponents.h"
 #include "SFML/Graphics/Font.hpp"
+#include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "constants.h"
 #include <gsl/gsl-lite.hpp>
@@ -9,14 +10,15 @@ namespace speedtyper {
 
     namespace {
         sf::RectangleShape create_bbox_around_text(const sf::Text& text, const sf::Font& font, unsigned int font_sz) {
+            if (text.getString().isEmpty()) {
+                return sf::RectangleShape{{0.0F, 0.0F}};
+            }
             constexpr auto font_sz_expand_factor = 1.2F;
             constexpr auto text_border_thickness = 1.0F;
             auto pos_beg = text.findCharacterPos(0);
             auto pos_end = text.findCharacterPos(text.getString().getSize() - 1);
-            gsl::span<const sf::Uint32> text_span{text.getString().getData(), text.getString().getSize()};
-            auto last_letter = text_span.back();
-            auto glyph = font.getGlyph(last_letter, font_sz, false);
-            auto rect_width = pos_end.x - pos_beg.x + glyph.advance;
+            auto last_letter = *(text.getString().end()-1);
+            auto rect_width = pos_end.x - pos_beg.x + font.getGlyph(last_letter, font_sz, false).advance;
             auto rect_height = static_cast<float>(font_sz) * font_sz_expand_factor;
             sf::RectangleShape rect{sf::Vector2f{rect_width, rect_height}};
             rect.setPosition(text.getPosition());
@@ -27,11 +29,11 @@ namespace speedtyper {
     }
 
 WordEntity::WordEntity(float x, float y, const std::string& s, const sf::Font& font)
-    : _X{x}, _Y{y}, _s{s}, _text{s, font, _font_sz} {
+    : _X{x}, _Y{y}, _s{s}, _text{s, font, GUI_options::ent_font_sz} {
     _text.setPosition(_X, _Y);
     _text.setFillColor(sf::Color::Cyan);
 
-    _text_border = create_bbox_around_text(_text, font, _font_sz);
+    _text_border = create_bbox_around_text(_text, font, GUI_options::ent_font_sz);
     set_state(State::untouched);
 }
 
@@ -92,15 +94,15 @@ void DisplayedWords::create_words(){
     float x_start = _X;
     float y_start = _Y;
     auto space_advance =
-        _font.getGlyph(speedtyper::ASCII_values::key_space, speedtyper::GUI_options::FONT_SZ, false)
+        _font.getGlyph(ASCII_values::key_space, GUI_options::ent_font_sz, false)
             .advance;
     for (int i = 0; i < _num_words_ahead; ++i) {
         auto word_entity = WordEntity(x_start, y_start, _wp.get_word(), _font);
         auto delta_x = word_entity.get_width_of_bbox() + space_advance;
-        if (x_start + delta_x > static_cast<float>(speedtyper::GUI_options::win_sz_X)) {
+        if (x_start + delta_x > static_cast<float>(GUI_options::win_sz_X)) {
             // this word spills out of main window so put it to new line
             x_start = _X;
-            y_start += _font.getLineSpacing(speedtyper::GUI_options::FONT_SZ);
+            y_start += _font.getLineSpacing(GUI_options::ent_font_sz);
             word_entity.set_position(x_start, y_start);
         }
         x_start += delta_x;
@@ -135,7 +137,7 @@ void DisplayedWords::next_word(const std::string& previous) {
 void DisplayedWords::move_all_words_line_up() {
     for (auto& word : _all_words) {
         auto [x, y] = word.get_position();
-        word.set_position(x, y - _font.getLineSpacing(speedtyper::GUI_options::FONT_SZ));
+        word.set_position(x, y - _font.getLineSpacing(speedtyper::GUI_options::ent_font_sz));
     }
 }
 
@@ -158,8 +160,8 @@ void DisplayedWords::reset(){
 
 InputField::InputField(const sf::Font& font)
     : _font{font}
-    , _input_field{"", font, speedtyper::GUI_options::FONT_SZ}
-    , _input_field_bg{sf::Vector2f{speedtyper::GUI_options::win_sz_X / 2.0F, speedtyper::GUI_options::FONT_SZ * 1.2}} 
+    , _input_field{"", font, speedtyper::GUI_options::gui_font_sz}
+    , _input_field_bg{sf::Vector2f{speedtyper::GUI_options::win_sz_X / 2.0F, speedtyper::GUI_options::gui_font_sz * 1.2}} 
     {
         _input_field_bg.setFillColor(sf::Color::White);
         _input_field_bg.setPosition(speedtyper::GUI_options::win_sz_X / 4.0F, speedtyper::GUI_options::win_sz_Y / 2.0F);
@@ -186,11 +188,11 @@ void InputField::set_bg_color(const sf::Color& color){
 
 Button::Button(sf::Vector2f pos, const std::string& text, const sf::Font& font, std::function <void ()> func)
     : _X{pos.x}, _Y{pos.y}, _font{font}
-    , _txt{text, font, speedtyper::GUI_options::FONT_SZ}
+    , _txt{text, font, speedtyper::GUI_options::gui_font_sz}
     , _txt_bg{}
     , _callback{std::move(func)}
 {
-    _txt_bg = create_bbox_around_text(_txt, _font, speedtyper::GUI_options::FONT_SZ);
+    _txt_bg = create_bbox_around_text(_txt, _font, speedtyper::GUI_options::gui_font_sz);
     _txt_bg.setPosition(_X, _Y);
     _txt_bg.setFillColor(sf::Color::White);
     _txt_bg.setOutlineColor(sf::Color::Blue);
@@ -206,9 +208,15 @@ void Button::draw(sf::RenderWindow& window) const {
     window.draw(_txt);
 }
 
-bool Button::hover(const sf::Vector2i& v) const {
+bool Button::hover(const sf::Vector2i& v) {
     sf::Vector2f mousePosF{static_cast<float>(v.x), static_cast<float>(v.y)};
-    return _txt_bg.getGlobalBounds().contains(mousePosF);
+    if (_txt_bg.getGlobalBounds().contains(mousePosF)){
+        _txt_bg.setFillColor(sf::Color(250, 20, 20));
+        return true;
+    }          
+    _txt_bg.setFillColor(sf::Color::White);
+    return false;
+    /* return _txt_bg.getGlobalBounds().contains(mousePosF); */
 }
 
 }  // namespace speedtyper

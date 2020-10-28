@@ -4,6 +4,7 @@
 #include "SFML/Config.hpp"
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/System/Vector2.hpp"
+#include "../include/constants.h"
 #include <catch2/catch.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>
@@ -51,11 +52,10 @@ TEST_CASE("WordEntity") {
         using namespace std::string_literals; // for ""s to create string
         auto text = "Hello"s;
         auto font = load_font();
-        auto font_sz = WordEntity::get_font_size();
 
         auto total_width = 0.0F;
         for (const auto& c : text) {
-            total_width += font.getGlyph(static_cast<sf::Uint32>(c), font_sz, false).advance;
+            total_width += font.getGlyph(static_cast<sf::Uint32>(c), speedtyper::GUI_options::ent_font_sz, false).advance;
         }
 
         WordEntity we{10.0F, 10.0F, text, font};

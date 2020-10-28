@@ -79,8 +79,7 @@ int main() {
     window.setFramerateLimit(speedtyper::GUI_options::FPS_LIMIT);
 
     sf::Font font;
-    if (!font.loadFromFile("../assets/ubuntu-font-family-0.83/"
-                           "ubuntu-font-family-0.83/Ubuntu-L.ttf")) {
+    if (!font.loadFromFile("../assets/dejavu-sans/DejaVuSans.ttf")) {
         fmt::print(fg(fmt::color::red), "font loading failed\n");
         return 1;
     }
@@ -158,13 +157,10 @@ int main() {
             }
 
             if (reset_button.hover(sf::Mouse::getPosition(window))) {
-                /* reset_button.setFillColor(sf::Color(250, 20, 20)); */
                 if (event.type == sf::Event::MouseButtonPressed) {
                     reset_button();
                 }
-            } else {
-                /* reset_button.setFillColor(sf::Color::White); */
-            }
+            } 
 
             if (typing_loop_condition(event)) {
                 const auto unicode = event.text.unicode;

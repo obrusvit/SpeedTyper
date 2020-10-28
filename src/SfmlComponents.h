@@ -32,8 +32,6 @@ class WordEntity {
     void set_position(float x, float y);
     void set_position(sf::Vector2f pos);
 
-    static auto get_font_size() { return _font_sz; }
-
     auto get_position() const { return _text_border.getPosition(); }
 
     const std::string& get_string() const { return _s; }
@@ -47,8 +45,6 @@ class WordEntity {
     sf::Text _text;
     sf::RectangleShape _text_border;
     State _state{State::untouched};
-    constexpr static unsigned int _font_sz{30};
-    constexpr static float _font_sz_expand_factor{1.2F};
     constexpr static float _text_border_thickness{2.0F};
 
 };
@@ -129,7 +125,7 @@ class Button {
 
         void draw(sf::RenderWindow& win) const;
 
-        bool hover(const sf::Vector2i& v) const;
+        bool hover(const sf::Vector2i& v);
 
         void operator()() const{
             _callback();
