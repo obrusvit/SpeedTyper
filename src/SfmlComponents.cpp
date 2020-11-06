@@ -37,6 +37,11 @@ WordEntity::WordEntity(float x, float y, const std::string& s, const sf::Font& f
     set_state(State::untouched);
 }
 
+void WordEntity::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    target.draw(_text, states);
+    target.draw(_text_border, states);
+}
+
 void WordEntity::set_state(State st) {
     switch (st) {
     case State::typed_correctly:
@@ -73,11 +78,6 @@ void WordEntity::set_position(sf::Vector2f pos) {
     _text_border.setPosition(pos);
 }
 
-void WordEntity::draw_word_entity(sf::RenderWindow& win) const {
-    win.draw(_text);
-    win.draw(_text_border);
-}
-
 float WordEntity::get_width_of_bbox() const {
     auto text_border_sz = _text_border.getSize();
     return text_border_sz.x;
@@ -110,6 +110,15 @@ void DisplayedWords::create_words(){
     }
 }
 
+void DisplayedWords::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    for (const auto& word_entity : _all_words) {
+        auto y_pos = word_entity.get_position().y;
+        if (y_pos <= _Y_draw_boundary) {
+            target.draw(word_entity, states);
+        }
+    }
+}
+
 void DisplayedWords::update(const std::string& s) {
     auto& current_word = get_current_word();
     if (s == current_word.get_string().substr(0, s.size())) {
@@ -137,16 +146,7 @@ void DisplayedWords::next_word(const std::string& previous) {
 void DisplayedWords::move_all_words_line_up() {
     for (auto& word : _all_words) {
         auto [x, y] = word.get_position();
-        word.set_position(x, y - _font.getLineSpacing(speedtyper::GUI_options::ent_font_sz));
-    }
-}
-
-void DisplayedWords::draw_word_collection(sf::RenderWindow& win) const {
-    for (const auto& word_entity : _all_words) {
-        auto y_pos = word_entity.get_position().y;
-        if (y_pos <= _Y_draw_boundary) {
-            word_entity.draw_word_entity(win);
-        }
+        word.set_position(x, y - _font.getLineSpacing(GUI_options::ent_font_sz));
     }
 }
 
@@ -160,19 +160,35 @@ void DisplayedWords::reset(){
 
 InputField::InputField(const sf::Font& font)
     : _font{font}
-    , _input_field{"", font, speedtyper::GUI_options::gui_font_sz}
-    , _input_field_bg{sf::Vector2f{speedtyper::GUI_options::win_sz_X / 2.0F, speedtyper::GUI_options::gui_font_sz * 1.2}} 
+    , _input_field{"", font, GUI_options::gui_font_sz}
+    , _input_field_bg{sf::Vector2f{GUI_options::win_sz_X / 2.0F, GUI_options::gui_font_sz * 1.2}} 
     {
-        _input_field_bg.setFillColor(sf::Color::White);
-        _input_field_bg.setPosition(speedtyper::GUI_options::win_sz_X / 4.0F, speedtyper::GUI_options::win_sz_Y / 2.0F);
-
-        _input_field.setPosition(speedtyper::GUI_options::win_sz_X / 4.0F, speedtyper::GUI_options::win_sz_Y / 2.0F);
-        _input_field.setFillColor(sf::Color::Black);
+        _input_field_bg.setPosition(GUI_options::win_sz_X / 4.0F, GUI_options::win_sz_Y / 2.0F);
+        _input_field.setPosition(GUI_options::win_sz_X / 4.0F, GUI_options::win_sz_Y / 2.0F);
+        set_active(true);
     }
 
-void InputField::draw_input_field(sf::RenderWindow& win) const {
-    win.draw(_input_field_bg);
-    win.draw(_input_field);
+void InputField::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    target.draw(_input_field_bg, states);
+    target.draw(_input_field, states);
+}
+
+bool InputField::hover(const sf::Vector2i& v) {
+    sf::Vector2f mousePosF{static_cast<float>(v.x), static_cast<float>(v.y)};
+    return _input_field_bg.getGlobalBounds().contains(mousePosF);
+}
+
+void InputField::set_active(bool b) {
+    active = b;
+    if (active) {
+        _input_field_bg.setFillColor(sf::Color::White);
+        _input_field.setFillColor(sf::Color::Black);
+        _input_field.setString("");
+    } else {
+        _input_field_bg.setFillColor(sf::Color(200, 200, 200));
+        _input_field.setFillColor(sf::Color::Red);
+        _input_field.setString("Click...");
+    }
 }
 
 void InputField::set_string(const std::string& s){
@@ -188,30 +204,30 @@ void InputField::set_bg_color(const sf::Color& color){
 
 Button::Button(sf::Vector2f pos, const std::string& text, const sf::Font& font, std::function <void ()> func)
     : _X{pos.x}, _Y{pos.y}, _font{font}
-    , _txt{text, font, speedtyper::GUI_options::gui_font_sz}
+    , _txt{text, font, GUI_options::gui_font_sz}
     , _txt_bg{}
     , _callback{std::move(func)}
 {
-    _txt_bg = create_bbox_around_text(_txt, _font, speedtyper::GUI_options::gui_font_sz);
+    _txt_bg = create_bbox_around_text(_txt, _font, GUI_options::gui_font_sz);
     _txt_bg.setPosition(_X, _Y);
     _txt_bg.setFillColor(sf::Color::White);
     _txt_bg.setOutlineColor(sf::Color::Blue);
     _txt_bg.setOutlineThickness(1.0F);
 
-    _txt.setFillColor(sf::Color::Blue);
+    _txt.setFillColor(sf::Color::Black);
     _txt.setPosition(_txt_bg.getPosition());
 
 }
 
-void Button::draw(sf::RenderWindow& window) const {
-    window.draw(_txt_bg);
-    window.draw(_txt);
+void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    target.draw(_txt_bg, states);
+    target.draw(_txt, states);
 }
 
 bool Button::hover(const sf::Vector2i& v) {
     sf::Vector2f mousePosF{static_cast<float>(v.x), static_cast<float>(v.y)};
     if (_txt_bg.getGlobalBounds().contains(mousePosF)){
-        _txt_bg.setFillColor(sf::Color(250, 20, 20));
+        _txt_bg.setFillColor(sf::Color(255, 25, 25, 255));
         return true;
     }          
     _txt_bg.setFillColor(sf::Color::White);
