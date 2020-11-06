@@ -159,7 +159,6 @@ TEST_CASE("Timer") {
         [[maybe_unused]] auto id_2 = t1.set_timeout(add_four_to_captured, 50ms);
         std::this_thread::sleep_for(100ms);
         REQUIRE(num_for_test == initial_val + 2 + 4);
-
     }
 
 }
