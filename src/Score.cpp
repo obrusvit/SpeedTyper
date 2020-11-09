@@ -1,10 +1,10 @@
 #include "Score.h"
 
-void show_results_terminal(const speedtyper::Score& score, int sec){
+void show_results_terminal(const speedtyper::Score& score){
     /*
      * {[index]:[format_specifier]}
      * format_specifier:
-     * [[fill]align][sign][#]{0}[width][.precision][type]
+     *     [[fill]align][sign][#]{0}[width][.precision][type]
      */
     constexpr auto report_width = 30;
     constexpr auto number_width =  6;
@@ -21,6 +21,6 @@ void show_results_terminal(const speedtyper::Score& score, int sec){
     fmt::print(fg(fmt::color::gray),  "{0:.<{2}}{1:.>{3}}\n", "Total key presses:",  score.key_presses, description_width, number_width);
     fmt::print(fg(fmt::color::red),   "{0:.<{2}}{1:.>{3}}\n", "Backspace:",   score.backspaces, description_width, number_width);
     fmt::print("\n{0:_^{1}}\n", "Summary", report_width);
-    fmt::print(fg(fmt::color::gray),  "{0:.<{2}}{1:.>{3}}\n", "CPM:", score.calculate_cpm(sec), description_width, number_width);
-    fmt::print(fg(fmt::color::gray) | fmt::emphasis::bold,  "{0:.<{2}}{1:.>{3}}\n", "WPM:", score.calculate_wpm(sec), description_width, number_width);
+    fmt::print(fg(fmt::color::gray),  "{0:.<{2}.2}{1:.>{3}}\n", "CPM:", score.calculate_cpm(), description_width, number_width);
+    fmt::print(fg(fmt::color::gray) | fmt::emphasis::bold,  "{0:.<{2}}{1:.>{3}}\n", "WPM:", score.calculate_wpm(), description_width, number_width);
 }

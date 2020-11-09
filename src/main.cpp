@@ -76,7 +76,17 @@ void setup_ImGui(sf::RenderWindow& window){
     IO.Fonts->Clear(); // clear fonts if you loaded some before (even if only default one was loaded)
     IO.Fonts->AddFontFromFileTTF("../assets/dejavu-sans/DejaVuSans.ttf", 12.f);
     ImGui::SFML::UpdateFontTexture(); // important call: updates font texture
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.TabRounding = 0.0F;
+    style.GrabRounding = 0.0F;
+    style.FrameRounding = 0.0F;
+    style.ChildRounding = 0.0F;
+    style.PopupRounding = 0.0F;
+    style.WindowRounding = 0.0F;
+    style.ScrollbarRounding = 0.0F;
 }
+
 
 void show_settings(int* test_time){
     ImGui::Begin("Settings");
@@ -85,6 +95,36 @@ void show_settings(int* test_time){
     ImGui::DragInt("test time", test_time, 1.0f, 10, 1200);
     ImGui::End();
 }
+
+void show_results_imgui(const speedtyper::Score score){
+    ImGui::Begin("Last result:");
+    constexpr auto report_width = 30;
+    constexpr auto number_width =  6;
+    constexpr auto description_width =  report_width - number_width;
+    ImGui::Separator();
+    ImGui::Text( "%s", fmt::format("{0}\n","Words").c_str());
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s",
+                       fmt::format("{0:.<{2}}{1:.>{3}}\n", "Correct:", score.words_correct, description_width, number_width) .c_str());
+    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s",
+                       fmt::format("{0:.<{2}}{1:.>{3}}\n", "Incorrect:", score.words_bad, description_width, number_width) .c_str());
+    auto chars_typed = fmt::format("{0}|{1}", score.chars_correct, score.chars_bad);
+
+    ImGui::Separator();
+    ImGui::Text( "%s", fmt::format("{0}\n","Keys").c_str());
+    ImGui::Text("%s", fmt::format("{0:.<{2}}{1:.>{3}}\n", "Chars typed:", chars_typed, description_width, number_width).c_str());
+    ImGui::Text("%s", fmt::format("{0:.<{2}}{1:.>{3}.3}\n", "Accuracy:",  score.calculate_accuracy(), description_width, number_width).c_str());
+    ImGui::Text("%s", fmt::format("{0:.<{2}}{1:.>{3}}\n", "Total key presses:",  score.key_presses, description_width, number_width).c_str());
+    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s",
+                       fmt::format("{0:.<{2}}{1:.>{3}}\n", "Backspace:",   score.backspaces, description_width, number_width) .c_str());
+
+    ImGui::Separator();
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("%s", fmt::format("{0}\n", "Summary").c_str());
+    ImGui::Text("%s", fmt::format("{0:.<{2}.2}{1:.>{3}}\n", "CPM:", score.calculate_cpm(), description_width, number_width).c_str());
+    ImGui::Text("%s", fmt::format("{0:.<{2}}{1:.>{3}}\n", "WPM:", score.calculate_wpm(), description_width, number_width).c_str());
+    ImGui::End();
+}
+
 
 enum class SpeedTyperStatus { waiting_for_start, running, finished, showing_results };
 
@@ -115,7 +155,7 @@ int main() {
 
     speedtyper::DisplayedWords displayed_words{font};
     speedtyper::InputField input_field{font};
-    speedtyper::Score score{};
+    speedtyper::Score score{test_time};
     std::vector<std::unique_ptr<sf::Drawable>> owning_drawables;
     auto reset_button_pos_x = input_field.get_position().x + input_field.get_size().x + 5.0F;
     auto reset_button_pos_y = input_field.get_position().y;
@@ -124,7 +164,6 @@ int main() {
             [&]() {
                     displayed_words.reset();
                     input_field.reset();
-                    score.reset();
                     oss.str("");
                     timer.disable(timer_current_task_id);
                     typer_status = SpeedTyperStatus::waiting_for_start;
@@ -136,14 +175,16 @@ int main() {
     //------------------------------------------------------------------------------
     // delegate rendering to another thread
 
-    
     sf::Clock deltaClock;
     window.setActive(false);
-    auto rendering = [&window, &not_owning_drawables, &owning_drawables, &deltaClock, &test_time]() {
+    auto rendering = [&]() {
         window.setActive(true);
         while (window.isOpen()) {
             ImGui::SFML::Update(window, deltaClock.restart());
             show_settings(&test_time);
+            if (typer_status.load() == SpeedTyperStatus::showing_results) {
+                show_results_imgui(score);
+            }
             window.clear();
             for (const auto& ptr_drawable : not_owning_drawables){
                 window.draw(*ptr_drawable);
@@ -185,9 +226,9 @@ int main() {
             if (typer_status == SpeedTyperStatus::finished) {
                 input_field.set_bg_color(sf::Color::Yellow);
                 typer_status = SpeedTyperStatus::showing_results;
-                show_results_terminal(score, test_time);
+                show_results_terminal(score);
 
-                auto result = fmt::format("Score is {}", score.calculate_wpm(test_time));
+                auto result = fmt::format("Score is {}", score.calculate_wpm());
                 auto* txt = new sf::Text(result, font, speedtyper::GUI_options::gui_font_sz);
                 txt->setPosition(input_field.get_position().x+300, input_field.get_position().y+100);
                 owning_drawables.push_back(std::unique_ptr<sf::Drawable>(txt));
@@ -226,6 +267,7 @@ int main() {
                         auto timeout = duration_cast<milliseconds>(
                             seconds(test_time));
                         typer_status = SpeedTyperStatus::running;
+                        score = speedtyper::Score(test_time);
                         timer_current_task_id = timer.set_timeout(func_timeout, timeout);
                     }
                     handle_written_char(score, displayed_words, oss, unicode);

@@ -17,16 +17,11 @@ struct Score {
     int backspaces{0};
     int spaces{0};
     int key_presses{0};
+    int test_time{0};  //in seconds
 
-    void reset() {
-        words_correct = 0;
-        words_bad = 0;
-        chars_correct = 0;
-        chars_bad = 0;
-        backspaces = 0;
-        spaces = 0;
-        key_presses = 0;
-    }
+    explicit Score(int t_time) 
+        : test_time{t_time} {}
+
 
     void add_word(const std::string& added, const std::string& correct) {
         auto added_sz = static_cast<int>(added.size());
@@ -41,13 +36,13 @@ struct Score {
         }
     }
 
-    [[nodiscard]] double calculate_cpm(int sec) const {
-        auto factor = 60.0 / sec;
+    [[nodiscard]] double calculate_cpm() const {
+        auto factor = 60.0 / test_time;
         return chars_correct * factor;
     }
 
-    [[nodiscard]] unsigned int calculate_wpm(int sec) const {
-        auto cpm = calculate_cpm(sec);
+    [[nodiscard]] unsigned int calculate_wpm() const {
+        auto cpm = calculate_cpm();
         return static_cast<unsigned int> (cpm / avg_word_len);
     }
 
@@ -63,7 +58,7 @@ struct Score {
 }  // namespace speedtyper
 
 
-void show_results_terminal(const speedtyper::Score& score, int sec);
+void show_results_terminal(const speedtyper::Score& score);
 
 
 #endif /* ifndef SPEED_TYPER_SCORE */
