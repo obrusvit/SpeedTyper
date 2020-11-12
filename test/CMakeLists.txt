@@ -16,6 +16,15 @@ target_link_libraries(tests
     sfml_components
     catch_main CONAN_PKG::fmt)
 
+add_executable(tests_db tests_db.cpp)
+target_link_libraries(tests_db
+    PRIVATE
+    project_options project_warnings
+    catch_main
+    CONAN_PKG::fmt
+    CONAN_PKG::sqlpp11
+    CONAN_PKG::sqlpp11-connector-sqlite3)
+
 add_executable(test_gui test_gui.cpp)
 target_link_libraries(test_gui
     PRIVATE

@@ -76,6 +76,14 @@ flags = [
 '-I/home/obrusvit/.conan/data/ogg/1.3.4/_/_/package/6b7ff26bfd4c2cf2ccba522bfba2d2e7820e40da/include',
 '-I/home/obrusvit/.conan/data/zlib/1.2.11/_/_/package/6b7ff26bfd4c2cf2ccba522bfba2d2e7820e40da/include',
 
+# conan sqlite stuff
+'-isystem', '/home/obrusvit/.conan/data/sqlpp11-connector-sqlite3/0.30/_/_/package/bebbff8def6a9d9855163389e26007e877630caa/include',
+'-isystem', '/home/obrusvit/.conan/data/sqlpp11/0.60/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include',
+'-isystem', '/home/obrusvit/.conan/data/date/2.4.1/_/_/package/1e572d87bcbf8a65d93a47a06f1e2ad2c8edf647/include',
+'-isystem', '/home/obrusvit/.conan/data/libcurl/7.69.1/_/_/package/a3c130aecdb433de1a0f956114f023a0ad0a546f/include',
+'-isystem', '/home/obrusvit/.conan/data/openssl/1.1.1h/_/_/package/6b7ff26bfd4c2cf2ccba522bfba2d2e7820e40da/include',
+'-isystem', '/home/obrusvit/.conan/data/sqlite3/3.32.3/_/_/package/b8c710d7fc0948f5843b11a21d9c8168742df6ae/include',
+
 # copied from global ycm_extra_conf but with clang/10/include instead of gcc/
 '-isystem', '/usr/include/c++/9',
 '-isystem', '/usr/include/x86_64-linux-gnu/c++/9',

@@ -2,6 +2,8 @@
 sfml/2.5.1@bincrafters/stable
 imgui/1.75
 imgui-sfml/2.1@bincrafters/stable
+sqlpp11/0.60
+sqlpp11-connector-sqlite3/0.30
 catch2/2.13.0
 docopt.cpp/0.6.2
 fmt/7.0.3
