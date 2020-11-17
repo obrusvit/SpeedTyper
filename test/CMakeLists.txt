@@ -24,6 +24,10 @@ target_link_libraries(tests_db
     CONAN_PKG::fmt
     CONAN_PKG::sqlpp11
     CONAN_PKG::sqlpp11-connector-sqlite3)
+target_include_directories(tests_db
+    PRIVATE
+    ../include
+    ../src)
 
 add_executable(test_gui test_gui.cpp)
 target_link_libraries(test_gui

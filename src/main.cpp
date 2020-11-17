@@ -88,11 +88,11 @@ void setup_ImGui(sf::RenderWindow& window){
 }
 
 
-void show_settings(int* test_time){
+void show_settings(int* test_duration){
     ImGui::Begin("Settings");
     ImGui::SetWindowPos({100, 500});
     ImGui::Text("Just a text");
-    ImGui::DragInt("test time", test_time, 1.0f, 10, 1200);
+    ImGui::DragInt("test time", test_duration, 1.0f, 10, 1200);
     ImGui::End();
 }
 
@@ -149,13 +149,13 @@ int main() {
     speedtyper::Timer timer;
     int timer_current_task_id = 0;
     std::atomic<SpeedTyperStatus> typer_status = SpeedTyperStatus::waiting_for_start;
-    int test_time = speedtyper::gameopt::seconds_limit;  // [s]
+    int test_duration = speedtyper::gameopt::seconds_limit;  // [s]
 
     //------------------------------------------------------------------------------
 
     speedtyper::DisplayedWords displayed_words{font};
     speedtyper::InputField input_field{font};
-    speedtyper::Score score{test_time};
+    speedtyper::Score score{test_duration};
     std::vector<std::unique_ptr<sf::Drawable>> owning_drawables;
     auto reset_button_pos_x = input_field.get_position().x + input_field.get_size().x + 5.0F;
     auto reset_button_pos_y = input_field.get_position().y;
@@ -181,10 +181,10 @@ int main() {
         window.setActive(true);
         while (window.isOpen()) {
             ImGui::SFML::Update(window, deltaClock.restart());
-            show_settings(&test_time);
-            if (typer_status.load() == SpeedTyperStatus::showing_results) {
+            show_settings(&test_duration);
+            /* if (typer_status.load() == SpeedTyperStatus::showing_results) { */
                 show_results_imgui(score);
-            }
+            /* } */
             window.clear();
             for (const auto& ptr_drawable : not_owning_drawables){
                 window.draw(*ptr_drawable);
@@ -227,7 +227,7 @@ int main() {
                 input_field.set_bg_color(sf::Color::Yellow);
                 typer_status = SpeedTyperStatus::showing_results;
                 show_results_terminal(score);
-
+                
                 auto result = fmt::format("Score is {}", score.calculate_wpm());
                 auto* txt = new sf::Text(result, font, speedtyper::GUI_options::gui_font_sz);
                 txt->setPosition(input_field.get_position().x+300, input_field.get_position().y+100);
@@ -265,9 +265,9 @@ int main() {
                     if (typer_status == SpeedTyperStatus::waiting_for_start) {
                         using namespace std::chrono;
                         auto timeout = duration_cast<milliseconds>(
-                            seconds(test_time));
+                            seconds(test_duration));
                         typer_status = SpeedTyperStatus::running;
-                        score = speedtyper::Score(test_time);
+                        score = speedtyper::Score(test_duration);
                         timer_current_task_id = timer.set_timeout(func_timeout, timeout);
                     }
                     handle_written_char(score, displayed_words, oss, unicode);

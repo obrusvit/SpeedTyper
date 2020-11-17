@@ -160,5 +160,5 @@ TEST_CASE("Timer") {
         std::this_thread::sleep_for(100ms);
         REQUIRE(num_for_test == initial_val + 2 + 4);
     }
-
 }
+
