@@ -27,12 +27,15 @@
 #include <imgui-SFML.h>
 
 #include "SFML/Window/Mouse.hpp"
-#include "Score.h"
 #include "SfmlComponents.h"
 #include "Timer.h"
+#include "Score.h"
+#include "DatabaseScore.h"
 #include "constants.h"
 
-void handle_backspace(speedtyper::Score& score, speedtyper::DisplayedWords& display,
+using namespace speedtyper;
+
+void handle_backspace(Score& score, DisplayedWords& display,
                       std::ostringstream& oss) {
     fmt::print("BS\n");
     auto so_far = oss.str();
@@ -48,7 +51,7 @@ void handle_backspace(speedtyper::Score& score, speedtyper::DisplayedWords& disp
     display.update(oss.str());
 }
 
-void handle_space(speedtyper::Score& score, speedtyper::DisplayedWords& display,
+void handle_space(Score& score, DisplayedWords& display,
                   std::ostringstream& oss) {
     score.add_word(oss.str(), display.get_current_word().get_string());
     score.spaces++;
@@ -58,10 +61,10 @@ void handle_space(speedtyper::Score& score, speedtyper::DisplayedWords& display,
     oss.clear();
 }
 
-void handle_written_char(speedtyper::Score& score, speedtyper::DisplayedWords& display,
+void handle_written_char(Score& score, DisplayedWords& display,
                          std::ostringstream& oss, unsigned int unicode) {
-    if (unicode > speedtyper::ASCII_values::key_space &&
-        unicode < speedtyper::ASCII_values::limit) {
+    if (unicode > ASCII_values::key_space &&
+        unicode < ASCII_values::limit) {
         auto entered = static_cast<char>(unicode);
         fmt::print("ASCII char typed: {}\n", entered);
         oss << entered;
@@ -88,15 +91,15 @@ void setup_ImGui(sf::RenderWindow& window){
 }
 
 
-void show_settings(int* test_duration){
+void show_settings(int* test_duration, bool* save_to_db){
     ImGui::Begin("Settings");
     ImGui::SetWindowPos({100, 500});
-    ImGui::Text("Just a text");
     ImGui::DragInt("test time", test_duration, 1.0f, 10, 1200);
+    ImGui::Checkbox("Save to db", save_to_db);
     ImGui::End();
 }
 
-void show_results_imgui(const speedtyper::Score score){
+void show_results_imgui(const Score& score){
     ImGui::Begin("Last result:");
     constexpr auto report_width = 30;
     constexpr auto number_width =  6;
@@ -126,15 +129,41 @@ void show_results_imgui(const speedtyper::Score score){
 }
 
 
+void show_past_results_plot(const std::vector<float>& past_data){
+    static int dur_min = 10;
+    static int dur_max = 100;
+    static bool is_span = false;
+    ImGui::Begin("Past results"); 
+    if (is_span){
+        ImGui::DragInt("Duration min", &dur_min, 1.0f, 10, dur_max);
+        ImGui::SameLine(); ImGui::Checkbox("Span", &is_span);
+        ImGui::DragInt("Duration max", &dur_max, 1.0f, dur_min, 1200);
+    } else {
+        ImGui::DragInt("Duration", &dur_min, 1.0f, 10, 1200);
+        ImGui::SameLine(); ImGui::Checkbox("Span", &is_span);
+    }
+    const char* items[] = { "WPM", "CPM", "Correct words", "Wrong words", "Backspaces"};
+    static int item_current = 0;
+    ImGui::SameLine(); ImGui::Combo("combo", &item_current, items, IM_ARRAYSIZE(items));
+    /* ImGui::SameLine(); HelpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n"); */
+
+    static int values_offset = 0;
+    static const char *overlay = items[item_current];
+    /* ImGui::PlotLines("Past results", all_wpm.data(), all_wpm.size(), values_offset, overlay, -1.0f, 1.0f, ImVec2(0,120)); */
+    ImGui::PlotLines("Past results", past_data.data(), static_cast<int>(past_data.size()), values_offset, overlay, -1.0f, 1.0f);
+    ImGui::End();
+}
+
+
 enum class SpeedTyperStatus { waiting_for_start, running, finished, showing_results };
 
 
 int main() {
     XInitThreads();
     sf::RenderWindow window(
-        sf::VideoMode(speedtyper::GUI_options::win_sz_X, speedtyper::GUI_options::win_sz_Y),
+        sf::VideoMode(GUI_options::win_sz_X, GUI_options::win_sz_Y),
         "Typer++");
-    window.setFramerateLimit(speedtyper::GUI_options::FPS_LIMIT);
+    window.setFramerateLimit(GUI_options::FPS_LIMIT);
     setup_ImGui(window);
 
     sf::Font font;
@@ -146,21 +175,24 @@ int main() {
     //------------------------------------------------------------------------------
 
     std::ostringstream oss{};
-    speedtyper::Timer timer;
-    int timer_current_task_id = 0;
     std::atomic<SpeedTyperStatus> typer_status = SpeedTyperStatus::waiting_for_start;
-    int test_duration = speedtyper::gameopt::seconds_limit;  // [s]
+    Timer timer;
+    auto timer_current_task_id = 0;
+    auto test_duration = gameopt::seconds_limit;  // [s]
+    auto save_to_db = true;
+    auto all_past_wpm_to_plot = get_all_wpm_from_db<float>();
 
     //------------------------------------------------------------------------------
+    // GUI variables
 
-    speedtyper::DisplayedWords displayed_words{font};
-    speedtyper::InputField input_field{font};
-    speedtyper::Score score{test_duration};
+    DisplayedWords displayed_words{font};
+    InputField input_field{font};
+    Score score{test_duration};
     std::vector<std::unique_ptr<sf::Drawable>> owning_drawables;
     auto reset_button_pos_x = input_field.get_position().x + input_field.get_size().x + 5.0F;
     auto reset_button_pos_y = input_field.get_position().y;
     auto reset_button_pos = sf::Vector2f{reset_button_pos_x, reset_button_pos_y};
-    speedtyper::Button reset_button(reset_button_pos, "Reset", font, 
+    Button reset_button(reset_button_pos, "Reset", font, 
             [&]() {
                     displayed_words.reset();
                     input_field.reset();
@@ -181,10 +213,9 @@ int main() {
         window.setActive(true);
         while (window.isOpen()) {
             ImGui::SFML::Update(window, deltaClock.restart());
-            show_settings(&test_duration);
-            /* if (typer_status.load() == SpeedTyperStatus::showing_results) { */
-                show_results_imgui(score);
-            /* } */
+            show_settings(&test_duration, &save_to_db);
+            show_results_imgui(score);
+            show_past_results_plot(all_past_wpm_to_plot);
             window.clear();
             for (const auto& ptr_drawable : not_owning_drawables){
                 window.draw(*ptr_drawable);
@@ -227,11 +258,14 @@ int main() {
                 input_field.set_bg_color(sf::Color::Yellow);
                 typer_status = SpeedTyperStatus::showing_results;
                 show_results_terminal(score);
+                if (save_to_db) 
+                    save_results_to_db(score);
+                all_past_wpm_to_plot = get_all_wpm_from_db<float>();
                 
-                auto result = fmt::format("Score is {}", score.calculate_wpm());
-                auto* txt = new sf::Text(result, font, speedtyper::GUI_options::gui_font_sz);
+                auto result = fmt::format("Done, WPM is {}", score.calculate_wpm());
+                auto txt = std::make_unique<sf::Text>(result, font, GUI_options::gui_font_sz);
                 txt->setPosition(input_field.get_position().x+300, input_field.get_position().y+100);
-                owning_drawables.push_back(std::unique_ptr<sf::Drawable>(txt));
+                owning_drawables.push_back(std::move(txt));
             }
 
             // focus/unfocus the input field
@@ -255,10 +289,10 @@ int main() {
             if (typing_loop_condition(event)) {
                 const auto unicode = event.text.unicode;
                 switch (unicode) {
-                case speedtyper::ASCII_values::key_backspace:
+                case ASCII_values::key_backspace:
                     handle_backspace(score, displayed_words, oss);
                     break;
-                case speedtyper::ASCII_values::key_space:
+                case ASCII_values::key_space:
                     handle_space(score, displayed_words, oss);
                     break;
                 default:
@@ -267,7 +301,7 @@ int main() {
                         auto timeout = duration_cast<milliseconds>(
                             seconds(test_duration));
                         typer_status = SpeedTyperStatus::running;
-                        score = speedtyper::Score(test_duration);
+                        score = Score(test_duration);
                         timer_current_task_id = timer.set_timeout(func_timeout, timeout);
                     }
                     handle_written_char(score, displayed_words, oss, unicode);

@@ -21,7 +21,7 @@ namespace GUI_options {
 } // namespace GUI_options
 
 namespace gameopt {
-    constexpr unsigned int seconds_limit = 20;
+    constexpr int seconds_limit = 20;
 
 } // namespace gameopt
 

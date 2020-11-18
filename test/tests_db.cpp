@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "Score.h"
+#include "DatabaseScore.h"
 #include "TabScore.h"
 #include <sqlpp11/custom_query.h>
 #include <sqlpp11/select_flags.h>
@@ -29,40 +30,7 @@ SQLPP_ALIAS_PROVIDER(left)
 /* SQLPP_ALIAS_PROVIDER(pragma) */
 /* SQLPP_ALIAS_PROVIDER(sub) */
 
-void print_rows_tabscore(auto& db, const auto& tab) {
-    // explicit all_of(tab)
-    fmt::print("Printing all rows TabScore:\n");
-    for (const auto& row : db(select(all_of(tab)).from(tab).unconditionally())) {
-        std::cout << "row id " << row.id << "\n\t"
-                  << "words_correct: " << row.words_correct << ", "
-                  << "words_bad: " << row.words_bad << ", "
-                  << "chars_correct: " << row.chars_correct << ", "
-                  << "chars_bad: " << row.chars_bad << ", "
-                  << "backspaces: " << row.backspaces << ", "
-                  << "spaces: " << row.spaces << ", "
-                  << "key_presses: " << row.key_presses << ", "
-                  << "wpm: " << row.wpm << ", "
-                  << "cpm: " << row.cpm << ", "
-                  << "test_duration: " << row.test_duration << ", "
-                  << "test_datetime: " << row.test_datetime << ", "
-                  << "\n";
-    };
-    fmt::print("---\n");
-}
-
-void print_rows_tabsample(auto& db, const auto& tab) {
-    // explicit all_of(tab)
-    fmt::print("Printing all rows of TabSample:\n");
-    int i = 0;
-    for (const auto& row : db(select(all_of(tab)).from(tab).unconditionally())) {
-        std::cout << "row no " << i << "\n\trow.alpha: " << row.alpha << ", row.beta: " << row.beta
-                  << ", row.gamma: " << row.gamma << "\n";
-        ++i;
-    };
-    fmt::print("---\n");
-}
-
-auto get_the_database_up_and_running(bool in_file = false) {
+auto get_test_database_up_and_running(bool in_file = false) {
     sql::connection_config config;
     config.flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
     config.debug = false;
@@ -95,33 +63,12 @@ auto get_the_database_up_and_running(bool in_file = false) {
     return db;
 }
 
-auto row_to_score(const auto& row) {
-    auto ret = speedtyper::Score(static_cast<int>(row.test_duration));
-    ret.words_correct = static_cast<int>(row.words_correct);
-    ret.words_bad = static_cast<int>(row.words_bad);
-    ret.chars_correct = static_cast<int>(row.chars_correct);
-    ret.chars_bad = static_cast<int>(row.chars_bad);
-    ret.backspaces = static_cast<int>(row.backspaces);
-    ret.spaces = static_cast<int>(row.spaces);
-    ret.key_presses = static_cast<int>(row.key_presses);
-    return ret;
-}
-
-auto create_insert_score_query(const TabScore& tab, speedtyper::Score s1) {
-    const auto now = std::chrono::system_clock::now();
-    return insert_into(tab).set(tab.words_correct = s1.words_correct, tab.words_bad = s1.words_bad,
-                                tab.chars_correct = s1.chars_correct, tab.chars_bad = s1.chars_bad,
-                                tab.backspaces = s1.backspaces, tab.spaces = s1.spaces,
-                                tab.key_presses = s1.key_presses, tab.wpm = s1.calculate_wpm(),
-                                tab.cpm = s1.calculate_cpm(), tab.test_duration = s1.test_duration,
-                                tab.test_datetime = now);
-}
 
 TEST_CASE("Database") {
-    using speedtyper::Score;
+    using namespace speedtyper;
 
     SECTION("Score database basics") {
-        auto db = get_the_database_up_and_running(false);
+        auto db = get_test_database_up_and_running(false);
         const auto tab = TabScore{};
 
         /* auto result_1 = db(select(all_of(tab))); */
@@ -191,7 +138,7 @@ TEST_CASE("Database") {
     }
 
     SECTION("TabScore database from score objects") {
-        auto db = get_the_database_up_and_running(false);
+        auto db = get_test_database_up_and_running(false);
         const auto tab = TabScore{};
         REQUIRE(db(select(all_of(tab)).from(tab).unconditionally()).empty());
 
@@ -217,7 +164,7 @@ TEST_CASE("Database") {
     }
 
     SECTION("TabScore database placed in real file") {
-        auto db = get_the_database_up_and_running(true);
+        auto db = get_test_database_up_and_running(true);
         const auto tab = TabScore{};
         REQUIRE(db(select(all_of(tab)).from(tab).unconditionally()).empty());
 
@@ -273,11 +220,11 @@ TEST_CASE("Database") {
         REQUIRE(s1 == row_to_score(result_1.front()));
 
         // remove it
-        db(remove_from(tab).where(tab.test_duration == 42 && tab.words_correct == 42 && tab.words_bad == 42));
+        db(remove_from(tab).where(tab.test_duration == 42 and tab.words_correct == 42 and tab.words_bad == 42));
 
         // check the db is the same as before
         auto result_all_final = db(select(all_of(tab)).from(tab).unconditionally());
-        auto db_size_final = std::distance(result_all.begin(), result_all.end());
+        auto db_size_final = std::distance(result_all_final.begin(), result_all_final.end());
         fmt::print("db_size, end of TabScore with real database test: {}\n", db_size_final);
         REQUIRE(db_size == db_size_final);
     }

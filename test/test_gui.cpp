@@ -4,9 +4,11 @@
 #include "constants.h"
 #include <SFML/Graphics/Font.hpp>
 #include <iostream>
+#include <array>
 #include <fmt/core.h>
 #include <imgui.h>
 #include <imgui-SFML.h>
+
 
 #include "SfmlComponents.h"
 
@@ -14,8 +16,35 @@ void setup_ImGui(sf::RenderWindow& window){
     ImGui::SFML::Init(window, false);
     auto IO = ImGui::GetIO();
     IO.Fonts->Clear(); // clear fonts if you loaded some before (even if only default one was loaded)
-    IO.Fonts->AddFontFromFileTTF("../assets/dejavu-sans/DejaVuSans.ttf", 30.f);
+    IO.Fonts->AddFontFromFileTTF("../assets/dejavu-sans/DejaVuSans.ttf", 12.f);
     ImGui::SFML::UpdateFontTexture(); // important call: updates font texture
+}
+void show_past_results_plotting(){
+    static int dur_min = 10;
+    static int dur_max = 100;
+    static bool is_span = false;
+    ImGui::Begin("Past results"); 
+    if (is_span){
+        ImGui::DragInt("Duration min", &dur_min, 1.0f, 10, dur_max);
+        ImGui::SameLine(); ImGui::Checkbox("Span", &is_span);
+        ImGui::DragInt("Duration max", &dur_max, 1.0f, dur_min, 1200);
+    } else {
+        ImGui::DragInt("Duration", &dur_min, 1.0f, 10, 1200);
+        ImGui::SameLine(); ImGui::Checkbox("Span", &is_span);
+    }
+    const char* items[] = { "WPM", "CPM", "Correct words", "Wrong words", "Backspaces"};
+    static int item_current = 0;
+    ImGui::SameLine(); ImGui::Combo("combo", &item_current, items, IM_ARRAYSIZE(items));
+    /* ImGui::SameLine(); HelpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n"); */
+
+    /* static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f }; */
+    /* ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr)); */
+    std::array<float, 7> arr{ 0.25f, 0.1f, 1.0f, 12.5f, 0.92f, 0.1f, 0.2f };
+    ImGui::PlotLines("Frame Times", arr.data(), arr.size());
+    static int values_offset = 0;
+    static const char *overlay = items[item_current];
+    ImGui::PlotLines("Lines", arr.data(), arr.size(), values_offset, overlay, -1.0f, 1.0f, ImVec2(0,120));
+    ImGui::End();
 }
 
 int main() {
@@ -59,8 +88,9 @@ int main() {
         ImGui::Begin("Setting");
         ImGui::SetWindowPos({100, 200});
         ImGui::DragInt("Test time", &time_of_test, 1.0f, 10, 1200);
-
         ImGui::End();
+
+        show_past_results_plotting();
 
 
         window.clear();
