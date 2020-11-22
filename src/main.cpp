@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -93,7 +94,7 @@ void setup_ImGui(sf::RenderWindow& window){
 
 void show_settings(int* test_duration, bool* save_to_db){
     ImGui::Begin("Settings");
-    ImGui::SetWindowPos({100, 500});
+    ImGui::SetWindowPos({10, 500});
     ImGui::DragInt("test time", test_duration, 1.0f, 10, 1200);
     ImGui::Checkbox("Save to db", save_to_db);
     ImGui::End();
@@ -148,9 +149,10 @@ void show_past_results_plot(const std::vector<float>& past_data){
     /* ImGui::SameLine(); HelpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n"); */
 
     static int values_offset = 0;
+    auto scale_max = std::max_element(past_data.begin(), past_data.end());
+    auto scale_min = std::min_element(past_data.begin(), past_data.end());
     static const char *overlay = items[item_current];
-    /* ImGui::PlotLines("Past results", all_wpm.data(), all_wpm.size(), values_offset, overlay, -1.0f, 1.0f, ImVec2(0,120)); */
-    ImGui::PlotLines("Past results", past_data.data(), static_cast<int>(past_data.size()), values_offset, overlay, -1.0f, 1.0f);
+    ImGui::PlotLines("Past results", past_data.data(), static_cast<int>(past_data.size()), values_offset, NULL, *scale_min, *scale_max, ImVec2(0, 100));
     ImGui::End();
 }
 

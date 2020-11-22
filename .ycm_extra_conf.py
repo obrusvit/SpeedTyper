@@ -50,6 +50,7 @@ flags = [
 # '-fconcepts',
 '-I', 'include',
 '-I', 'src',
+'-I', 'src/implot',
 
 # conan dependencies from compile_comands.json
 '-I/home/obrusvit/.conan/data/imgui-sfml/2.1/bincrafters/stable/package/63c4610e7441aaef8f3f40a9566ae2ecd6553581/include',

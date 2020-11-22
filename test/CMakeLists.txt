@@ -34,11 +34,13 @@ target_link_libraries(test_gui
     PRIVATE
     project_options project_warnings
     sfml_components
+    # implot
     CONAN_PKG::sfml CONAN_PKG::imgui-sfml CONAN_PKG::fmt)
 target_include_directories(test_gui
     PRIVATE
     ../include
-    ../src)
+    ../src
+    ../src/implot)
 
 add_executable(test_imgui_demo imgui_demo.cpp test_imgui_demo.cpp)
 target_link_libraries(test_imgui_demo

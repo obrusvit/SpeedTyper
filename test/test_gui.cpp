@@ -8,6 +8,7 @@
 #include <fmt/core.h>
 #include <imgui.h>
 #include <imgui-SFML.h>
+/* #include <implot.h> */
 
 
 #include "SfmlComponents.h"
@@ -39,12 +40,26 @@ void show_past_results_plotting(){
 
     /* static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f }; */
     /* ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr)); */
-    std::array<float, 7> arr{ 0.25f, 0.1f, 1.0f, 12.5f, 0.92f, 0.1f, 0.2f };
+    /* std::array<float, 7> arr{ 0.25f, 0.1f, 1.0f, 12.5f, 0.92f, 0.1f, 0.2f }; */
+    std::array<float, 7> arr{ 5.25f, 5.1f, 5.0f, 5.5f, 5.92f, 5.1f, 5.2f };
     ImGui::PlotLines("Frame Times", arr.data(), arr.size());
     static int values_offset = 0;
     static const char *overlay = items[item_current];
-    ImGui::PlotLines("Lines", arr.data(), arr.size(), values_offset, overlay, -1.0f, 1.0f, ImVec2(0,120));
+    ImGui::PlotLines("Lines", arr.data(), arr.size(), values_offset, overlay, 5.0f, 6.0f, ImVec2(0,120));
     ImGui::End();
+}
+
+void test_implot(){
+    // TODO try to integrate implot
+    int   bar_data[5] = {1, 2, 2, 5, 1};
+
+    ImGui::Begin("My Window");
+    /* if (ImPlot::BeginPlot("My Plot")) { */
+    /*     ImPlot::PlotBars("My Bar Plot", bar_data, 11); */
+    /*     ImPlot::EndPlot(); */
+    /* } */
+    ImGui::End();
+
 }
 
 int main() {
@@ -91,6 +106,7 @@ int main() {
         ImGui::End();
 
         show_past_results_plotting();
+        test_implot();
 
 
         window.clear();
