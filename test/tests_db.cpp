@@ -94,7 +94,7 @@ TEST_CASE("Database") {
             ++i2;
         }
         REQUIRE(i2 == 0); // BE CAREFUL, std::distance invalidates result_t object
-        print_rows_tabscore(db, tab);
+        /* print_rows_tabscore(db, tab); */
 
         // insert one more and test size
         const auto now = std::chrono::system_clock::now();
@@ -105,7 +105,7 @@ TEST_CASE("Database") {
         auto result_3 = db(select(all_of(tab)).from(tab).unconditionally());
         auto d3 = std::distance(result_3.begin(), result_3.end());
         REQUIRE(d3 == 2);
-        print_rows_tabscore(db, tab);
+        /* print_rows_tabscore(db, tab); */
 
         // insert with different time
         db(insert_into(tab).set(tab.words_correct = 60, tab.words_bad = 0, tab.chars_correct = 360,
@@ -118,14 +118,14 @@ TEST_CASE("Database") {
         auto d5 = std::distance(result_5.begin(), result_5.end());
         REQUIRE(d4 == 1);
         REQUIRE(d5 == 2);
-        print_rows_tabscore(db, tab);
+        /* print_rows_tabscore(db, tab); */
 
         // remove one with id 3 (last one)
         db(remove_from(tab).where(tab.id == 3));
         auto result_6 = db(select(all_of(tab)).from(tab).unconditionally());
         auto d6 = std::distance(result_6.begin(), result_6.end());
         REQUIRE(d6 == 2);
-        print_rows_tabscore(db, tab);
+        /* print_rows_tabscore(db, tab); */
 
         // get all words_correct to vector
         std::vector<long int> vec_words_correct{};
@@ -153,7 +153,7 @@ TEST_CASE("Database") {
 
         auto insert_score_query = create_insert_score_query(tab, s1);
         db(insert_score_query);
-        print_rows_tabscore(db, tab);
+        /* print_rows_tabscore(db, tab); */
 
         auto result_1 = db(select(all_of(tab)).from(tab).unconditionally());
         const auto& only_entry = result_1.front();
@@ -188,6 +188,33 @@ TEST_CASE("Database") {
         REQUIRE(s1 == row_to_score(only_entry));
     }
 
+    SECTION("TabScore database select n results"){
+        auto db = get_test_database_up_and_running(false);
+        const auto tab = TabScore{};
+        REQUIRE(db(select(all_of(tab)).from(tab).unconditionally()).empty());
+
+        Score s1{60};
+        Score s2{61};
+        Score s3{62};
+        Score s4{63};
+
+        db(create_insert_score_query(tab, s1));
+        db(create_insert_score_query(tab, s2));
+        db(create_insert_score_query(tab, s3));
+        db(create_insert_score_query(tab, s4));
+
+        unsigned long how_many_results = 2;
+        auto result = db(select(all_of(tab)).from(tab).order_by(tab.id.desc()).unconditionally().limit(how_many_results));
+        REQUIRE(result.front().id.value() == 4);
+        REQUIRE(result.front().test_duration.value() == 63);
+
+        auto dist = static_cast<unsigned long>(std::distance(result.begin(), result.end()));
+        REQUIRE(dist == how_many_results);
+    }
+}
+
+TEST_CASE("RealDatabase") {
+    using namespace speedtyper;
     SECTION("TabScore with real database") {
 
         // prepare connection

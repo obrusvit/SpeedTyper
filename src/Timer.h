@@ -11,7 +11,7 @@ namespace speedtyper {
 
 /**
  * Simple Timer Class.
- * Inspired by https://github.com/99x/timercpp but this Timer returns IDs of new tasks
+ * Inspired by https://github.com/99x/timercpp but my Timer returns IDs of new tasks
  * and you can disable them.
  *
  * Drawback: Timer uses detached threads that must access the class member id_2_active.
