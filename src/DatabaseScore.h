@@ -90,8 +90,8 @@ class PastDataSetting {
 
   public:
     PastDataSetting() = default;
-    PastDataSetting(std::string s, int d_max, int d_min, int n_results)
-        : what{std::move(s)}, dur_max{d_max}, dur_min{d_min}, num_of_results{n_results} {}
+    PastDataSetting(std::string s, int d_min, int d_max, int n_results)
+        : what{std::move(s)}, dur_min{d_min}, dur_max{d_max}, num_of_results{n_results} {}
 
     // FIXME GCC 9.3 refuses to compile defaulted version
     /* bool operator==(const PastDataSetting&) const = default; */
@@ -110,8 +110,8 @@ class PastDataSetting {
 
   private:
     std::string what{""};
-    int dur_max{0};
     int dur_min{0};
+    int dur_max{0};
     int num_of_results{0};
 };
 

@@ -29,6 +29,7 @@
 
 #include "DatabaseScore.h"
 #include "SFML/Window/Mouse.hpp"
+#include "SFML/Window/WindowStyle.hpp"
 #include "Score.h"
 #include "SfmlComponents.h"
 #include "Timer.h"
@@ -90,18 +91,49 @@ void setup_ImGui(sf::RenderWindow& window) {
 }
 
 void show_settings(int* test_duration, bool* save_to_db) {
-    ImGui::Begin("Settings");
-    ImGui::SetWindowPos({10, 500});
+    ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::DragInt("test time", test_duration, 1.0f, 10, 1200);
     ImGui::Checkbox("Save to db", save_to_db);
+    ImGui::SetWindowPos({10, 500});
+    /* ImGui::SetWindowSize({220, 100}); */
+    ImGui::End();
+}
+
+void show_past_results_plot(PastData& past_data) {
+    static int n_results = 10;
+    static std::array<int, 2> dur_min_max{10, 100}; 
+    static const std::array<const char*, 5> items = {"WPM", "CPM", "words_correct", "words_bad",
+                                              "backspaces"};
+    static int item_current = 0;
+    ImGui::Begin("Past results", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+    ImGui::DragInt("Number of results", &n_results, 1.0f, 0, 10'000);
+    ImGui::DragIntRange2("Min/Max dur", &dur_min_max.at(0), &dur_min_max.at(1), 1.0f, 10, 1200);
+    ImGui::SameLine();
+    ImGui::SameLine();
+    ImGui::Combo("combo", &item_current, items.data(), items.size());
+
+    const char* overlay = items.at(static_cast<decltype(items)::size_type>(item_current));
+    PastDataSetting setting{std::string{overlay}, dur_min_max.at(0), dur_min_max.at(1), n_results};
+    auto data = past_data.get_past_data(setting);
+    auto scale_max = std::max_element(data.begin(), data.end());
+    auto scale_min = std::min_element(data.begin(), data.end());
+    if (!data.empty()) {
+        ImGui::PlotLines("Past results", data.data(), static_cast<int>(data.size()), 0, overlay,
+                         *scale_min, *scale_max, ImVec2(0, 140));
+        ImGui::Button("Make proper plot.");
+    } else {
+        ImGui::Text("No results with given settings");
+    }
+    ImGui::SetWindowPos({240, 500});
+    /* ImGui::SetWindowSize({550, 250}); */
     ImGui::End();
 }
 
 void show_results_imgui(const Score& score) {
-    ImGui::Begin("Last result:");
     constexpr auto report_width = 30;
     constexpr auto number_width = 6;
     constexpr auto description_width = report_width - number_width;
+    ImGui::Begin("Current result:", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::Separator();
     ImGui::Text("%s", fmt::format("{0}\n", "Words").c_str());
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s",
@@ -139,40 +171,7 @@ void show_results_imgui(const Score& score) {
     ImGui::Text("%s", fmt::format("{0:.<{2}}{1:.>{3}}\n", "WPM:", score.calculate_wpm(),
                                   description_width, number_width)
                           .c_str());
-    ImGui::End();
-}
-
-void show_past_results_plot(PastData& past_data) {
-    static int n_results = 10;
-    static bool is_span = false;
-    static int dur_min = 10;
-    static int dur_max = 100;
-    const std::array<const char*, 5> items = {"WPM", "CPM", "words_correct", "words_bad",
-                                              "backspaces"};
-    static int item_current = 0;
-    ImGui::Begin("Past results");
-    ImGui::DragInt("Number of results", &n_results, 1.0f, 0, 10'000);
-    ImGui::DragInt("Min dur", &dur_min, 1.0f, 10, dur_max);
-    ImGui::SameLine();
-    ImGui::Checkbox("Span", &is_span);
-    if (is_span) {
-        ImGui::DragInt("Max dur", &dur_max, 1.0f, dur_min, 1200);
-    }
-
-    ImGui::SameLine();
-    ImGui::Combo("combo", &item_current, items.data(), items.size());
-
-    const char* overlay = items.at(static_cast<decltype(items)::size_type>(item_current));
-    PastDataSetting setting{std::string{overlay}, dur_max, dur_min, n_results};
-    auto data = past_data.get_past_data(setting);
-    auto scale_max = std::max_element(data.begin(), data.end());
-    auto scale_min = std::min_element(data.begin(), data.end());
-    if (data.size() > 0) {
-        ImGui::PlotLines("Past results", data.data(), static_cast<int>(data.size()), 0, overlay,
-                         *scale_min, *scale_max, ImVec2(0, 140));
-    } else {
-        ImGui::Text("No results with given settings");
-    }
+    ImGui::SetWindowPos({800, 500});
     ImGui::End();
 }
 
@@ -180,7 +179,8 @@ enum class SpeedTyperStatus { waiting_for_start, running, finished, showing_resu
 
 int main() {
     XInitThreads();
-    sf::RenderWindow window(sf::VideoMode(GUI_options::win_sz_X, GUI_options::win_sz_Y), "Typer++");
+    sf::RenderWindow window(sf::VideoMode(GUI_options::win_sz_X, GUI_options::win_sz_Y), "Typer++",
+                            sf::Style::Close); // Close is to turn off resize ability
     window.setFramerateLimit(GUI_options::FPS_LIMIT);
     setup_ImGui(window);
 
@@ -265,6 +265,12 @@ int main() {
             ImGui::SFML::ProcessEvent(event);
             if (event.type == sf::Event::Closed) {
                 window.close();
+            }
+
+            if (event.type == sf::Event::Resized) {
+                /* Resize everything accordingly */
+                /* window.setView(sf::View(sf::FloatRect(0, 0, event.size.width, */
+                /*                 event.size.height))); */
             }
 
             if (typer_status == SpeedTyperStatus::showing_results) {
