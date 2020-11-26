@@ -18,6 +18,8 @@ include(cmake/Conan.cmake)
 run_conan()
 # conan_basic_setup()
 
+find_package(Matplot++ REQUIRED HINTS $ENV{MATPLOTPP_DIR})
+
 add_subdirectory(src)
 
 option(ENABLE_TESTING "Enable Test Builds" ON)

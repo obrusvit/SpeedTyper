@@ -9,7 +9,6 @@
 #include <sqlpp11/sqlpp11.h>
 #include <utility>
 #include <vector>
-/* #include <concepts> */
 
 #ifdef SQLPP_USE_SQLCIPHER
 #include <sqlcipher/sqlite3.h>
@@ -73,20 +72,8 @@ void save_results_to_db(const speedtyper::Score&);
 
 sqlpp::sqlite3::connection get_db_connection();
 
-template <typename T>
-// requires std::floating_point<T>
-std::vector<T> get_all_wpm_from_db() {
-    std::vector<T> ret{};
-    auto db = get_db_connection();
-    const auto tab = TabScore{};
-    auto result = db(select(tab.wpm).from(tab).unconditionally());
-    for (const auto& row : result) {
-        ret.push_back(static_cast<T>(row.wpm));
-    }
-    return ret;
-}
-
 class PastDataSetting {
+    /* Used to capture options needed to create a plot of past results */
 
   public:
     PastDataSetting() = default;
@@ -132,15 +119,15 @@ inline auto get_result_from_db(const PastDataSetting& ps) {
     std::vector<float> ret{};
     for (const auto& row : db(create_select_query(tab, ps))) {
         float what{};
-        if (ps.get_what() == "WPM"){
+        if (ps.get_what() == "WPM") {
             what = static_cast<float>(row.wpm);
-        } else if (ps.get_what() == "CPM"){
+        } else if (ps.get_what() == "CPM") {
             what = static_cast<float>(row.cpm);
-        } else if (ps.get_what() == "words_correct"){
+        } else if (ps.get_what() == "words_correct") {
             what = static_cast<float>(row.words_correct);
-        } else if (ps.get_what() == "words_bad"){
+        } else if (ps.get_what() == "words_bad") {
             what = static_cast<float>(row.words_bad);
-        } else if (ps.get_what() == "backspaces"){
+        } else if (ps.get_what() == "backspaces") {
             what = static_cast<float>(row.backspaces);
         } else {
             // this shouldn't happen

@@ -50,7 +50,6 @@ flags = [
 # '-fconcepts',
 '-I', 'include',
 '-I', 'src',
-'-I', 'src/implot',
 
 # conan dependencies from compile_comands.json
 '-I/home/obrusvit/.conan/data/imgui-sfml/2.1/bincrafters/stable/package/63c4610e7441aaef8f3f40a9566ae2ecd6553581/include',
@@ -84,6 +83,9 @@ flags = [
 '-isystem', '/home/obrusvit/.conan/data/libcurl/7.69.1/_/_/package/a3c130aecdb433de1a0f956114f023a0ad0a546f/include',
 '-isystem', '/home/obrusvit/.conan/data/openssl/1.1.1h/_/_/package/6b7ff26bfd4c2cf2ccba522bfba2d2e7820e40da/include',
 '-isystem', '/home/obrusvit/.conan/data/sqlite3/3.32.3/_/_/package/b8c710d7fc0948f5843b11a21d9c8168742df6ae/include',
+
+# matplotplusplus
+'-isystem',  '/home/obrusvit/Tools/Matplot++/Binary.Package.Linux/matplotplusplus-1.0.1-Linux/include',
 
 # copied from global ycm_extra_conf but with clang/10/include instead of gcc/
 '-isystem', '/usr/include/c++/9',

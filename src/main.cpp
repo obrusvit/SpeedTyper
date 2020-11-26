@@ -5,6 +5,8 @@
 #include <fmt/core.h>
 #include <functional> // ref()
 #include <iostream>
+#include <matplot/axes_objects/box_chart.h>
+#include <matplot/util/handle_types.h>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -92,22 +94,38 @@ void setup_ImGui(sf::RenderWindow& window) {
 
 void show_settings(int* test_duration, bool* save_to_db) {
     ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-    ImGui::DragInt("test time", test_duration, 1.0f, 10, 1200);
+    ImGui::DragInt("test time", test_duration, 1.0f, gameopt::seconds_limit_min, gameopt::seconds_limit_max);
     ImGui::Checkbox("Save to db", save_to_db);
     ImGui::SetWindowPos({10, 500});
     /* ImGui::SetWindowSize({220, 100}); */
     ImGui::End();
 }
 
+#include <matplot/matplot.h>
+void plot_with_matplotpp(PastData& past_data, const PastDataSetting& setting){
+    auto data = past_data.get_past_data(setting);
+
+    using namespace matplot;
+    auto f = figure(true);
+    /* auto ax = f->gca(); */
+    auto ax = f->current_axes();
+    auto p = ax->plot(data);
+    p->color("blue").line_width(3);
+    ax->ylabel(setting.get_what());
+    ax->xlabel("There will be datetimes..");
+    f->draw();
+}
+
 void show_past_results_plot(PastData& past_data) {
     static int n_results = 10;
-    static std::array<int, 2> dur_min_max{10, 100}; 
+    static std::array<int, 2> dur_min_max{10, 100};
     static const std::array<const char*, 5> items = {"WPM", "CPM", "words_correct", "words_bad",
-                                              "backspaces"};
+                                                     "backspaces"};
     static int item_current = 0;
     ImGui::Begin("Past results", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::DragInt("Number of results", &n_results, 1.0f, 0, 10'000);
-    ImGui::DragIntRange2("Min/Max dur", &dur_min_max.at(0), &dur_min_max.at(1), 1.0f, 10, 1200);
+    ImGui::DragIntRange2("Min/Max dur", &dur_min_max.at(0), &dur_min_max.at(1), 1.0f,
+                         gameopt::seconds_limit_min, gameopt::seconds_limit_max);
     ImGui::SameLine();
     ImGui::SameLine();
     ImGui::Combo("combo", &item_current, items.data(), items.size());
@@ -120,7 +138,9 @@ void show_past_results_plot(PastData& past_data) {
     if (!data.empty()) {
         ImGui::PlotLines("Past results", data.data(), static_cast<int>(data.size()), 0, overlay,
                          *scale_min, *scale_max, ImVec2(0, 140));
-        ImGui::Button("Make proper plot.");
+        if( ImGui::Button("Make proper plot.")){
+            plot_with_matplotpp(past_data, setting);
+        }
     } else {
         ImGui::Text("No results with given settings");
     }
@@ -197,7 +217,7 @@ int main() {
     std::atomic<SpeedTyperStatus> typer_status = SpeedTyperStatus::waiting_for_start;
     Timer timer;
     auto timer_current_task_id = 0;
-    auto test_duration = gameopt::seconds_limit; // [s]
+    auto test_duration = gameopt::seconds_limit_default; // [s]
     auto save_to_db = true;
     PastData past_data;
 
@@ -288,8 +308,8 @@ int main() {
 
                 auto result = fmt::format("Done, WPM is {}", score.calculate_wpm());
                 auto txt = std::make_unique<sf::Text>(result, font, GUI_options::gui_font_sz);
-                txt->setPosition(input_field.get_position().x + 300,
-                                 input_field.get_position().y + 100);
+                txt->setPosition(input_field.get_position().x,
+                                 input_field.get_position().y + 50);
                 owning_drawables.push_back(std::move(txt));
             }
 

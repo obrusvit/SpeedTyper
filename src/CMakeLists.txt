@@ -44,6 +44,7 @@ target_link_libraries(speed_typer
         score
         database_score
         sfml_components
+        Matplot++::matplot
         CONAN_PKG::imgui-sfml
         CONAN_PKG::fmt
         CONAN_PKG::gsl-lite)

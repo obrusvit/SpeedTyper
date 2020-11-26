@@ -75,7 +75,7 @@ int main() {
 
     speedtyper::Button button1({10, 10}, "Button1", font, [](){fmt::print("Button1 clicked\n");});
 
-    int time_of_test = speedtyper::gameopt::seconds_limit;
+    int time_of_test = speedtyper::gameopt::seconds_limit_default;
 
     // run the program as long as the window is open
     sf::Clock deltaClock;
