@@ -96,7 +96,7 @@ class PastDataSetting {
     [[nodiscard]] auto get_num_of_results() const { return num_of_results; }
 
   private:
-    std::string what{""};
+    std::string what;
     int dur_min{0};
     int dur_max{0};
     int num_of_results{0};

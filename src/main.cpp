@@ -28,6 +28,7 @@
 #include <X11/Xlib.h> // XInitThreads() otherwise error with [xcb]
 #include <imgui-SFML.h>
 #include <imgui.h>
+#include <matplot/matplot.h>
 
 #include "DatabaseScore.h"
 #include "SFML/Window/Mouse.hpp"
@@ -40,7 +41,6 @@
 using namespace speedtyper;
 
 void handle_backspace(Score& score, DisplayedWords& display, std::ostringstream& oss) {
-    fmt::print("BS\n");
     auto so_far = oss.str();
     if (so_far.empty()) {
         return;
@@ -67,7 +67,6 @@ void handle_written_char(Score& score, DisplayedWords& display, std::ostringstre
                          unsigned int unicode) {
     if (unicode > ASCII_values::key_space && unicode < ASCII_values::limit) {
         auto entered = static_cast<char>(unicode);
-        fmt::print("ASCII char typed: {}\n", entered);
         oss << entered;
         score.key_presses++;
         display.update(oss.str());
@@ -101,7 +100,6 @@ void show_settings(int* test_duration, bool* save_to_db) {
     ImGui::End();
 }
 
-#include <matplot/matplot.h>
 void plot_with_matplotpp(PastData& past_data, const PastDataSetting& setting){
     auto data = past_data.get_past_data(setting);
 
