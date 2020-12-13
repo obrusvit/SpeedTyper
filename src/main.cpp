@@ -93,14 +93,15 @@ void setup_ImGui(sf::RenderWindow& window) {
 
 void show_settings(int* test_duration, bool* save_to_db) {
     ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-    ImGui::DragInt("test time", test_duration, 1.0f, gameopt::seconds_limit_min, gameopt::seconds_limit_max);
+    ImGui::DragInt("test time", test_duration, 1.0f, gameopt::seconds_limit_min,
+                   gameopt::seconds_limit_max);
     ImGui::Checkbox("Save to db", save_to_db);
     ImGui::SetWindowPos({10, 500});
     /* ImGui::SetWindowSize({220, 100}); */
     ImGui::End();
 }
 
-void plot_with_matplotpp(PastData& past_data, const PastDataSetting& setting){
+void plot_with_matplotpp(PastData& past_data, const PastDataSetting& setting) {
     auto data = past_data.get_past_data(setting);
 
     using namespace matplot;
@@ -136,7 +137,7 @@ void show_past_results_plot(PastData& past_data) {
     if (!data.empty()) {
         ImGui::PlotLines("Past results", data.data(), static_cast<int>(data.size()), 0, overlay,
                          *scale_min, *scale_max, ImVec2(0, 140));
-        if( ImGui::Button("Make proper plot.")){
+        if (ImGui::Button("Make proper plot.")) {
             plot_with_matplotpp(past_data, setting);
         }
     } else {
@@ -218,13 +219,13 @@ int main() {
     auto test_duration = gameopt::seconds_limit_default; // [s]
     auto save_to_db = true;
     PastData past_data;
+    Score score{test_duration};
 
     //------------------------------------------------------------------------------
     // GUI objects
 
     DisplayedWords displayed_words{font};
     InputField input_field{font};
-    Score score{test_duration};
     std::vector<std::unique_ptr<sf::Drawable>> owning_drawables;
     auto reset_button_pos_x = input_field.get_position().x + input_field.get_size().x + 5.0F;
     auto reset_button_pos_y = input_field.get_position().y;
@@ -237,7 +238,12 @@ int main() {
         typer_status = SpeedTyperStatus::waiting_for_start;
         owning_drawables.clear();
     });
-    std::vector<sf::Drawable*> not_owning_drawables{&input_field, &displayed_words, &reset_button};
+    auto timer_display_pos_x = reset_button_pos_x + reset_button.get_size().x + 5.0F;
+    auto timer_display_pos_y = reset_button_pos_y;
+    auto timer_display_pos = sf::Vector2f{timer_display_pos_x, timer_display_pos_y};
+    TimerDisplay timer_display{timer_display_pos, test_duration, font};
+    std::vector<sf::Drawable*> not_owning_drawables{&input_field, &displayed_words, &reset_button,
+                                                    &timer_display};
 
     //------------------------------------------------------------------------------
     // Delegate rendering to another thread
@@ -252,6 +258,7 @@ int main() {
             show_results_imgui(score);
             show_past_results_plot(past_data);
             window.clear();
+            timer_display.set_time_s(timer.get_remaining_time_s(timer_current_task_id, test_duration));
             for (const auto& ptr_drawable : not_owning_drawables) {
                 window.draw(*ptr_drawable);
             }
@@ -306,12 +313,11 @@ int main() {
 
                 auto result = fmt::format("Done, WPM is {}", score.calculate_wpm());
                 auto txt = std::make_unique<sf::Text>(result, font, GUI_options::gui_font_sz);
-                txt->setPosition(input_field.get_position().x,
-                                 input_field.get_position().y + 50);
+                txt->setPosition(input_field.get_position().x, input_field.get_position().y + 50);
                 owning_drawables.push_back(std::move(txt));
             }
 
-            // focus/unfocus the input field
+            // focus/unfocus the InputField
             if (typer_status.load() == SpeedTyperStatus::waiting_for_start) {
                 if (event.type == sf::Event::MouseButtonPressed) {
                     if (input_field.hover(sf::Mouse::getPosition(window))) {
@@ -319,6 +325,13 @@ int main() {
                     } else {
                         input_field.set_active(false);
                     }
+                }
+            }
+            
+            // toggl visibility of the TimerDisplay
+            if (timer_display.hover(sf::Mouse::getPosition(window))){
+                if (event.type == sf::Event::MouseButtonPressed){
+                    timer_display.toggl_visibility();
                 }
             }
 

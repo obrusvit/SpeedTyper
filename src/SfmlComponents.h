@@ -1,6 +1,7 @@
 #ifndef SPEED_TYPER_SFML_COMPONENTS
 #define SPEED_TYPER_SFML_COMPONENTS
 
+#include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/Drawable.hpp"
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
@@ -137,6 +138,10 @@ class Button : public sf::Drawable {
 
     bool hover(const sf::Vector2i& v);
 
+    auto get_position() const { return _txt_bg.getPosition(); }
+
+    auto get_size() const { return _txt_bg.getSize(); }
+
     void operator()() const { _callback(); }
 
   private:
@@ -147,9 +152,44 @@ class Button : public sf::Drawable {
     sf::Font _font;
     sf::Text _txt;
     sf::RectangleShape _txt_bg;
-    std::function<void()> _callback; // FIXME ref? care about lifetime of passed func
+    std::function<void()> _callback;
 };
 
+//------------------------------------------------------------------------------
+
+class TimerDisplay : public sf::Drawable {
+  public:
+    TimerDisplay(sf::Vector2f pos, int init_time_s, const sf::Font& font);
+
+    bool hover(const sf::Vector2i& v);
+
+    auto get_position() const { return _txt_bg.getPosition(); }
+
+    auto get_size() const { return _txt_bg.getSize(); }
+
+    void reset() {
+        /* _txt_bg.setFillColor(sf::Color::Black); */
+        _txt.setString("");
+    }
+
+    void toggl_visibility();
+
+    void set_time_s(int time_s);
+
+  private:
+    float _X;
+    float _Y;
+    int _time_s;
+    bool _visible;
+    sf::Font _font;
+    sf::Text _txt;
+    sf::RectangleShape _txt_bg;
+
+    std::string fmt_time_s_2_str(int time_s);
+
+    void draw(sf::RenderTarget& target,
+              sf::RenderStates states = sf::RenderStates::Default) const override;
+};
 
 } // namespace speedtyper
 

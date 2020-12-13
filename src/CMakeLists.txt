@@ -33,7 +33,8 @@ target_link_libraries(sfml_components
     PRIVATE project_options project_warnings
         words_provider
         CONAN_PKG::gsl-lite
-        CONAN_PKG::sfml)
+        CONAN_PKG::sfml
+        CONAN_PKG::fmt)
 target_include_directories(sfml_components
     PRIVATE ../include)
 

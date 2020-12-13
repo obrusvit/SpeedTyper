@@ -5,6 +5,7 @@
 #include <chrono>
 #include <map>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 
 namespace speedtyper {
@@ -24,28 +25,72 @@ class Timer {
     std::atomic_int id_counter{0};
     static int last_id;
 
-    std::mutex map_mutex;
+    std::mutex map_mutex; // FIXME make one mutex for each map
     std::map<int, bool> id_2_active;
+    std::map<int, int> id_2_remaining_s;
 
-    auto get_id() { return id_counter++; }
+    auto gen_new_id() { return id_counter++; }
 
     bool map_check_active(auto id) {
         std::lock_guard<std::mutex> g{map_mutex};
-        return id_2_active.at(id);
+        try {
+            return id_2_active.at(id);
+        } catch (const std::out_of_range& e) {
+            return false;
+        }
     }
 
-    void map_remove(auto id) {
+    void maps_remove(auto id) {
         std::lock_guard<std::mutex> g{map_mutex};
         id_2_active.erase(id);
+        id_2_remaining_s.erase(id);
+    }
+
+    void map_remaining_decrement(auto id) {
+        std::lock_guard<std::mutex> g{map_mutex};
+        try {
+            --id_2_remaining_s.at(id);
+        } catch (const std::out_of_range& e) {
+            // nothing is needed to be done
+        }
     }
 
   public:
     [[nodiscard]] static int get_last_id() { return last_id; }
 
+    auto get_remaining_time_s(auto id, auto default_val) {
+        std::lock_guard<std::mutex> g{map_mutex};
+        try {
+            if (id_2_active.at(id)) {
+                return id_2_remaining_s.at(id);
+            }
+            return default_val;
+        } catch (const std::out_of_range& e) {
+            return default_val;
+        }
+    }
+
+    auto set_interval(int timer_id, std::chrono::milliseconds interval) {
+        std::thread t([=, this]() {
+            while (true) {
+                if (!this->map_check_active(timer_id)) {
+                    return;
+                }
+                std::this_thread::sleep_for(interval);
+                if (this->map_check_active(timer_id)) {
+                    map_remaining_decrement(timer_id);
+                }
+            }
+        });
+        t.detach();
+    }
+
     template <typename Function>
     [[nodiscard]] auto set_timeout(Function func, std::chrono::milliseconds timeout) {
-        auto new_id = get_id();
+        auto new_id = gen_new_id();
         id_2_active[new_id] = true;
+        id_2_remaining_s[new_id] =
+            static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(timeout).count());
         std::thread t([=, this]() {
             if (!this->map_check_active(new_id)) {
                 return;
@@ -54,17 +99,13 @@ class Timer {
             if (this->map_check_active(new_id)) {
                 func();
             }
-            this->map_remove(new_id);
+            this->maps_remove(new_id);
         });
         t.detach();
+        set_interval(new_id, std::chrono::milliseconds{1000});
         last_id = new_id;
         return new_id;
     }
-
-    /* template <typename Function> */
-    /* auto set_interval(Function func, std::chrono::milliseconds interval){ */
-
-    /* } */
 
     auto disable(auto id) {
         std::lock_guard<std::mutex> g{map_mutex};
