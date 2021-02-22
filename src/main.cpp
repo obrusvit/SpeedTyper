@@ -76,9 +76,9 @@ void handle_written_char(Score& score, DisplayedWords& display, std::ostringstre
 void setup_ImGui(sf::RenderWindow& window) {
     ImGui::SFML::Init(window, false);
     auto IO = ImGui::GetIO();
-    IO.Fonts
-        ->Clear(); // clear fonts if you loaded some before (even if only default one was loaded)
-    IO.Fonts->AddFontFromFileTTF("../assets/dejavu-sans/DejaVuSans.ttf", 12.f);
+    /* IO.Fonts */
+    /*     ->Clear(); // clear fonts if you loaded some before (even if only default one was loaded) */
+    /* IO.Fonts->AddFontFromFileTTF("../assets/dejavu-sans/DejaVuSans.ttf", 12.f); */
     ImGui::SFML::UpdateFontTexture(); // important call: updates font texture
 
     ImGuiStyle& style = ImGui::GetStyle();
@@ -149,9 +149,12 @@ void show_past_results_plot(PastData& past_data) {
 }
 
 void show_results_imgui(const Score& score) {
-    constexpr auto report_width = 30;
+    constexpr auto report_width = 25;
     constexpr auto number_width = 6;
     constexpr auto description_width = report_width - number_width;
+
+    /* ImGui::SetNextWindowSize({150, 200}); */
+    ImGui::SetNextWindowSize({0,0});
     ImGui::Begin("Current result:", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::Separator();
     ImGui::Text("%s", fmt::format("{0}\n", "Words").c_str());
@@ -220,6 +223,7 @@ int main() {
     auto save_to_db = true;
     PastData past_data;
     Score score{test_duration};
+    Score past_score{};
 
     //------------------------------------------------------------------------------
     // GUI objects
@@ -255,7 +259,7 @@ int main() {
         while (window.isOpen()) {
             ImGui::SFML::Update(window, deltaClock.restart());
             show_settings(&test_duration, &save_to_db);
-            show_results_imgui(score);
+            show_results_imgui(past_score);
             show_past_results_plot(past_data);
             window.clear();
             timer_display.set_time_s(timer.get_remaining_time_s(timer_current_task_id, test_duration));
@@ -305,13 +309,14 @@ int main() {
             if (typer_status == SpeedTyperStatus::finished) {
                 input_field.set_bg_color(sf::Color::Yellow);
                 typer_status = SpeedTyperStatus::showing_results;
-                show_results_terminal(score);
+                past_score = score;
+                show_results_terminal(past_score);
                 if (save_to_db) {
-                    save_results_to_db(score);
+                    save_results_to_db(past_score);
                     past_data.invalidate();
                 }
 
-                auto result = fmt::format("Done, WPM is {}", score.calculate_wpm());
+                auto result = fmt::format("Done, WPM is {}", past_score.calculate_wpm());
                 auto txt = std::make_unique<sf::Text>(result, font, GUI_options::gui_font_sz);
                 txt->setPosition(input_field.get_position().x, input_field.get_position().y + 50);
                 owning_drawables.push_back(std::move(txt));
@@ -356,7 +361,7 @@ int main() {
                         using namespace std::chrono;
                         auto timeout = duration_cast<milliseconds>(seconds(test_duration));
                         typer_status = SpeedTyperStatus::running;
-                        score = Score(test_duration);
+                        score = Score{test_duration};
                         timer_current_task_id = timer.set_timeout(func_timeout, timeout);
                     }
                     handle_written_char(score, displayed_words, oss, unicode);

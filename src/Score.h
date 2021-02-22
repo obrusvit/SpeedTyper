@@ -19,6 +19,8 @@ struct Score {
     int key_presses{0};
     int test_duration{1}; // in seconds
 
+    Score() = default;
+
     // TODO assert test_duration is not zero or negative
     explicit Score(int t_time) : test_duration{t_time} {}
 

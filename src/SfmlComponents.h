@@ -82,7 +82,7 @@ class DisplayedWords : public sf::Drawable {
 
     const float _X{20.0F};
     const float _Y{20.0F};
-    const float _Y_draw_boundary{200.0F};
+    const float _Y_draw_boundary{100.0F};  // the bottom of the DisplayedWords (from the top of window)
     sf::Font _font;
 
     std::vector<WordEntity> _all_words;
