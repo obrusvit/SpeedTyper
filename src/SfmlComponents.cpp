@@ -161,8 +161,8 @@ void DisplayedWords::reset() {
 InputField::InputField(const sf::Font& font)
     : _font{font}, _input_field{"", font, GUI_options::gui_font_sz},
       _input_field_bg{sf::Vector2f{GUI_options::win_sz_X / 2.0F, GUI_options::gui_font_sz * 1.2}} {
-    _input_field_bg.setPosition(GUI_options::win_sz_X / 4.0F, GUI_options::win_sz_Y / 2.0F);
-    _input_field.setPosition(GUI_options::win_sz_X / 4.0F, GUI_options::win_sz_Y / 2.0F);
+    _input_field_bg.setPosition(GUI_options::win_sz_X / 5.0F, GUI_options::win_sz_Y / 3.0F);
+    _input_field.setPosition(GUI_options::win_sz_X / 5.0F, GUI_options::win_sz_Y / 3.0F);
     set_active(true);
 }
 

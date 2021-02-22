@@ -13,7 +13,7 @@ namespace ASCII_values {
 
 namespace GUI_options {
     constexpr unsigned int win_sz_X = 1024;
-    constexpr unsigned int win_sz_Y = 768;
+    constexpr unsigned int win_sz_Y = 568;    // 768 previous
     constexpr unsigned int gui_font_sz = 30;  // used for Buttons, InputFields etc.
     constexpr unsigned int ent_font_sz = 30;  // used for WordEntity etc.
     constexpr int FPS_LIMIT = 30;

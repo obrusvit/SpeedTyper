@@ -91,13 +91,12 @@ void setup_ImGui(sf::RenderWindow& window) {
     style.ScrollbarRounding = 0.0F;
 }
 
-void show_settings(int* test_duration, bool* save_to_db) {
+void show_settings(int* test_duration, bool* save_to_db, float y_pos) {
+    ImGui::SetNextWindowPos({10, y_pos});
     ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::DragInt("test time", test_duration, 1.0f, gameopt::seconds_limit_min,
                    gameopt::seconds_limit_max);
     ImGui::Checkbox("Save to db", save_to_db);
-    ImGui::SetWindowPos({10, 500});
-    /* ImGui::SetWindowSize({220, 100}); */
     ImGui::End();
 }
 
@@ -115,12 +114,13 @@ void plot_with_matplotpp(PastData& past_data, const PastDataSetting& setting) {
     f->draw();
 }
 
-void show_past_results_plot(PastData& past_data) {
+void show_past_results_plot(PastData& past_data, float y_pos) {
     static int n_results = 10;
     static std::array<int, 2> dur_min_max{10, 100};
     static const std::array<const char*, 5> items = {"WPM", "CPM", "words_correct", "words_bad",
                                                      "backspaces"};
     static int item_current = 0;
+    ImGui::SetNextWindowPos({240, y_pos});
     ImGui::Begin("Past results", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::DragInt("Number of results", &n_results, 1.0f, 0, 10'000);
     ImGui::DragIntRange2("Min/Max dur", &dur_min_max.at(0), &dur_min_max.at(1), 1.0f,
@@ -143,17 +143,15 @@ void show_past_results_plot(PastData& past_data) {
     } else {
         ImGui::Text("No results with given settings");
     }
-    ImGui::SetWindowPos({240, 500});
-    /* ImGui::SetWindowSize({550, 250}); */
     ImGui::End();
 }
 
-void show_results_imgui(const Score& score) {
+void show_results_imgui(const Score& score, float y_pos) {
     constexpr auto report_width = 25;
     constexpr auto number_width = 6;
     constexpr auto description_width = report_width - number_width;
 
-    /* ImGui::SetNextWindowSize({150, 200}); */
+    ImGui::SetNextWindowPos({800, y_pos});
     ImGui::SetNextWindowSize({0,0});
     ImGui::Begin("Current result:", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::Separator();
@@ -193,7 +191,6 @@ void show_results_imgui(const Score& score) {
     ImGui::Text("%s", fmt::format("{0:.<{2}}{1:.>{3}}\n", "WPM:", score.calculate_wpm(),
                                   description_width, number_width)
                           .c_str());
-    ImGui::SetWindowPos({800, 500});
     ImGui::End();
 }
 
@@ -230,6 +227,7 @@ int main() {
 
     DisplayedWords displayed_words{font};
     InputField input_field{font};
+    const auto imgui_stuff_y_pos = input_field.get_position().y + 100.0f;
     std::vector<std::unique_ptr<sf::Drawable>> owning_drawables;
     auto reset_button_pos_x = input_field.get_position().x + input_field.get_size().x + 5.0F;
     auto reset_button_pos_y = input_field.get_position().y;
@@ -258,9 +256,9 @@ int main() {
         window.setActive(true);
         while (window.isOpen()) {
             ImGui::SFML::Update(window, deltaClock.restart());
-            show_settings(&test_duration, &save_to_db);
-            show_results_imgui(past_score);
-            show_past_results_plot(past_data);
+            show_settings(&test_duration, &save_to_db, imgui_stuff_y_pos);
+            show_results_imgui(past_score, imgui_stuff_y_pos);
+            show_past_results_plot(past_data, imgui_stuff_y_pos);
             window.clear();
             timer_display.set_time_s(timer.get_remaining_time_s(timer_current_task_id, test_duration));
             for (const auto& ptr_drawable : not_owning_drawables) {
