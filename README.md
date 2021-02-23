@@ -13,7 +13,7 @@ I wanted to improve some skills and try a few packages, like
 * plotting with Matplot++,
 * testing with Catch2,
 * using other libraries: fmt, gsl, ...,
-* using CMake for generating makefiles and Conan to handle dependencies,
+* using CMake in combination with Conan to handle dependencies,
 * some goodies of newer C++ standards (compiled for C++20),
 while creating something fun and a little bit useful. I use this program almost daily. Some parts might be written in a slightly more complicated way, that's a feature.
 
