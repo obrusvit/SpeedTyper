@@ -181,11 +181,9 @@ void InputField::set_active(bool b) {
     if (active) {
         _input_field_bg.setFillColor(sf::Color::White);
         _input_field.setFillColor(sf::Color::Black);
-        _input_field.setString("");
     } else {
         _input_field_bg.setFillColor(sf::Color(200, 200, 200));
         _input_field.setFillColor(sf::Color::Red);
-        _input_field.setString("Click...");
     }
 }
 

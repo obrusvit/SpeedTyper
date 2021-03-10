@@ -335,6 +335,7 @@ int main() {
             if (timer_display.hover(sf::Mouse::getPosition(window))){
                 if (event.type == sf::Event::MouseButtonPressed){
                     timer_display.toggl_visibility();
+                    input_field.set_active(true);
                 }
             }
 
