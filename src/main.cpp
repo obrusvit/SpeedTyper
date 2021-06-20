@@ -1,11 +1,12 @@
-#include <algorithm>
 #include <atomic>
+#include <algorithm>
 #include <chrono>
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <functional> // ref()
 #include <iostream>
 #include <matplot/axes_objects/box_chart.h>
+#include <matplot/freestanding/plot.h>
 #include <matplot/util/handle_types.h>
 #include <memory>
 #include <sstream>
@@ -94,7 +95,7 @@ void setup_ImGui(sf::RenderWindow& window) {
 void show_settings(int* test_duration, bool* save_to_db, float y_pos) {
     ImGui::SetNextWindowPos({10, y_pos});
     ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-    ImGui::DragInt("test time", test_duration, 1.0f, gameopt::seconds_limit_min,
+    ImGui::DragInt("test time", test_duration, 1.0F, gameopt::seconds_limit_min,
                    gameopt::seconds_limit_max);
     ImGui::Checkbox("Save to db", save_to_db);
     ImGui::End();
@@ -104,6 +105,7 @@ void plot_with_matplotpp(PastData& past_data, const PastDataSetting& setting) {
     auto data = past_data.get_past_data(setting);
 
     using namespace matplot;
+    auto f1 = matplot::figure(true);
     auto f = figure(true);
     /* auto ax = f->gca(); */
     auto ax = f->current_axes();
@@ -122,8 +124,8 @@ void show_past_results_plot(PastData& past_data, float y_pos) {
     static int item_current = 0;
     ImGui::SetNextWindowPos({240, y_pos});
     ImGui::Begin("Past results", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-    ImGui::DragInt("Number of results", &n_results, 1.0f, 0, 10'000);
-    ImGui::DragIntRange2("Min/Max dur", &dur_min_max.at(0), &dur_min_max.at(1), 1.0f,
+    ImGui::DragInt("Number of results", &n_results, 1.0F, 0, 10'000);
+    ImGui::DragIntRange2("Min/Max dur", &dur_min_max.at(0), &dur_min_max.at(1), 1.0F,
                          gameopt::seconds_limit_min, gameopt::seconds_limit_max);
     ImGui::SameLine();
     ImGui::SameLine();
@@ -156,11 +158,11 @@ void show_results_imgui(const Score& score, float y_pos) {
     ImGui::Begin("Current result:", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::Separator();
     ImGui::Text("%s", fmt::format("{0}\n", "Words").c_str());
-    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s",
+    ImGui::TextColored(ImVec4(0.0F, 1.0F, 0.0F, 1.0F), "%s",
                        fmt::format("{0:.<{2}}{1:.>{3}}\n", "Correct:", score.words_correct,
                                    description_width, number_width)
                            .c_str());
-    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s",
+    ImGui::TextColored(ImVec4(1.0F, 0.0F, 0.0F, 1.0F), "%s",
                        fmt::format("{0:.<{2}}{1:.>{3}}\n", "Incorrect:", score.words_bad,
                                    description_width, number_width)
                            .c_str());
@@ -177,7 +179,7 @@ void show_results_imgui(const Score& score, float y_pos) {
     ImGui::Text("%s", fmt::format("{0:.<{2}}{1:.>{3}}\n", "Total key presses:", score.key_presses,
                                   description_width, number_width)
                           .c_str());
-    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s",
+    ImGui::TextColored(ImVec4(1.0F, 0.0F, 0.0F, 1.0F), "%s",
                        fmt::format("{0:.<{2}}{1:.>{3}}\n", "Backspace:", score.backspaces,
                                    description_width, number_width)
                            .c_str());
@@ -227,7 +229,7 @@ int main() {
 
     DisplayedWords displayed_words{font};
     InputField input_field{font};
-    const auto imgui_stuff_y_pos = input_field.get_position().y + 100.0f;
+    const auto imgui_stuff_y_pos = input_field.get_position().y + 100.0F;
     std::vector<std::unique_ptr<sf::Drawable>> owning_drawables;
     auto reset_button_pos_x = input_field.get_position().x + input_field.get_size().x + 5.0F;
     auto reset_button_pos_y = input_field.get_position().y;

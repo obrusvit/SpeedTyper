@@ -9,6 +9,7 @@
 #include <sqlpp11/sqlpp11.h>
 #include <utility>
 #include <vector>
+#include <fmt/color.h>
 
 #ifdef SQLPP_USE_SQLCIPHER
 #include <sqlcipher/sqlite3.h>
