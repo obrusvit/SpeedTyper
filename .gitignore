@@ -1,0 +1,9 @@
+.cache/*
+.clangd/*
+assets/*
+build/*
+
+speedtyper.xopp
+
+
+
