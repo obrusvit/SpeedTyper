@@ -1,13 +1,12 @@
 [requires]
-sfml/2.5.1@bincrafters/stable
-imgui-sfml/2.1@bincrafters/stable
+imgui-sfml/2.5@bincrafters/stable
 sqlpp11/0.60
 sqlpp11-connector-sqlite3/0.30
-catch2/2.13.0
+catch2/2.13.8
 docopt.cpp/0.6.2
-fmt/7.0.3
-spdlog/1.7.0
-gsl-lite/0.38.1
+fmt/8.1.1
+spdlog/1.9.2
+gsl-lite/0.40.0
 
 [generators]
 cmake

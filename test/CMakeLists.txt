@@ -48,6 +48,13 @@ target_link_libraries(test_imgui_demo
     # project_options project_warnings
     CONAN_PKG::imgui-sfml)
 
+add_executable(test_matplot test_matplot.cpp)
+target_link_libraries(test_matplot
+    PRIVATE
+    project_options project_warnings
+    catch_main
+    Matplot++::matplot)
+
 
 # automatically discover tests that are defined in catch based test files you can modify the unittests. TEST_PREFIX to
 # whatever you want, or use different for different binaries

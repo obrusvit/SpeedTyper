@@ -1,11 +1,13 @@
-#include <atomic>
 #include <algorithm>
+#include <atomic>
 #include <chrono>
+#include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <functional> // ref()
 #include <iostream>
 #include <matplot/axes_objects/box_chart.h>
+#include <matplot/freestanding/axes_functions.h>
 #include <matplot/freestanding/plot.h>
 #include <matplot/util/handle_types.h>
 #include <memory>
@@ -78,7 +80,8 @@ void setup_ImGui(sf::RenderWindow& window) {
     ImGui::SFML::Init(window, false);
     auto IO = ImGui::GetIO();
     /* IO.Fonts */
-    /*     ->Clear(); // clear fonts if you loaded some before (even if only default one was loaded) */
+    /*     ->Clear(); // clear fonts if you loaded some before (even if only default one was loaded)
+     */
     /* IO.Fonts->AddFontFromFileTTF("../assets/dejavu-sans/DejaVuSans.ttf", 12.f); */
     ImGui::SFML::UpdateFontTexture(); // important call: updates font texture
 
@@ -101,18 +104,90 @@ void show_settings(int* test_duration, bool* save_to_db, float y_pos) {
     ImGui::End();
 }
 
-void plot_with_matplotpp(PastData& past_data, const PastDataSetting& setting) {
-    auto data = past_data.get_past_data(setting);
+void plot_with_matplotpp_data(auto y_data, const std::string& y_label) {
 
     using namespace matplot;
-    auto f1 = matplot::figure(true);
+    /* auto f1 = matplot::figure(true); */
     auto f = figure(true);
     /* auto ax = f->gca(); */
     auto ax = f->current_axes();
-    auto p = ax->plot(data);
-    p->color("blue").line_width(3);
-    ax->ylabel(setting.get_what());
-    ax->xlabel("There will be datetimes..");
+    auto p = ax->plot(y_data);
+    p->color("blue").line_width(2);
+    ax->ylabel(y_label);
+    ax->xlabel("test nr [-]");
+    f->draw();
+}
+
+auto get_xticks_from_timepoints(auto data_timepoints) {
+    using namespace std::chrono;
+    constexpr size_t n_of_ticks = 10;
+    std::vector<double> tick_points{};
+    std::vector<std::string> tick_labels{};
+    auto first_timepoint = data_timepoints.front();
+    if (data_timepoints.size() > n_of_ticks) {
+        tick_labels.reserve(n_of_ticks);
+        auto n = data_timepoints.size();
+        auto step = n / n_of_ticks;
+        for (auto iter = data_timepoints.begin(); iter < data_timepoints.end();
+             std::advance(iter, step)) {
+            tick_points.push_back(duration_cast<seconds>((*iter) - first_timepoint).count());
+            tick_labels.push_back(fmt::format("{:%d.%m.%Y}", *iter));
+        }
+        if (tick_points.back() !=
+            duration_cast<seconds>(data_timepoints.back() - first_timepoint).count()) {
+            // include also the very last entry if the previous iteration didn't hit the most recent
+            // point
+            tick_points.push_back(
+                duration_cast<seconds>(data_timepoints.back() - first_timepoint).count());
+            tick_labels.push_back(fmt::format("{:%d.%m.%Y}", data_timepoints.back()));
+        }
+    } else {
+        // if there are not that many, just put them all
+        tick_labels.reserve(data_timepoints.size());
+        for (const auto& timepoint : data_timepoints) {
+            tick_points.push_back(duration_cast<seconds>(timepoint - first_timepoint).count());
+            tick_labels.push_back(fmt::format("{:%d.%m.%Y}", timepoint));
+        }
+    }
+    return std::make_tuple(tick_points, tick_labels);
+}
+
+std::vector<double> get_xdata_from_timepoints(auto data_timepoints) {
+    using namespace std::chrono;
+    std::vector<double> res{};
+    res.reserve(data_timepoints.size());
+    auto first_timepoint = data_timepoints.front();
+    for (const auto& timepoint : data_timepoints) {
+        res.push_back(duration_cast<seconds>(timepoint - first_timepoint).count());
+    }
+    return res;
+}
+
+void plot_with_matplotpp_data_timepoints(auto data_timepoints, auto y_data,
+                                         const std::string& y_label) {
+    using namespace matplot;
+    if (data_timepoints.size() == 0) {
+        ImGui::Text("No timepoints.");
+        return;
+    }
+    if (data_timepoints.size() != y_data.size()) {
+        ImGui::Text("Timepoints and data mismatch.");
+        return;
+    }
+    auto x_data = get_xdata_from_timepoints(data_timepoints);
+    auto [x_ticks, x_ticks_labels] = get_xticks_from_timepoints(data_timepoints);
+    /* auto f1 = matplot::figure(true); */
+    auto f = figure(true);
+    /* auto ax = f->gca(); */
+    auto ax = f->current_axes();
+    auto p = ax->plot(x_data, y_data);
+    p->color("blue").line_width(2);
+    ax->ylabel(y_label);
+    ax->xlabel("Timepoint");
+    ax->xticks(x_ticks);
+    ax->xticklabels(x_ticks_labels);
+    ax->xtickangle(45);
+
     f->draw();
 }
 
@@ -122,6 +197,7 @@ void show_past_results_plot(PastData& past_data, float y_pos) {
     static const std::array<const char*, 5> items = {"WPM", "CPM", "words_correct", "words_bad",
                                                      "backspaces"};
     static int item_current = 0;
+    static bool plot_with_timepoints = false;
     ImGui::SetNextWindowPos({240, y_pos});
     ImGui::Begin("Past results", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::DragInt("Number of results", &n_results, 1.0F, 0, 10'000);
@@ -139,8 +215,15 @@ void show_past_results_plot(PastData& past_data, float y_pos) {
     if (!data.empty()) {
         ImGui::PlotLines("Past results", data.data(), static_cast<int>(data.size()), 0, overlay,
                          *scale_min, *scale_max, ImVec2(0, 140));
+        ImGui::Checkbox("With timepoints", &plot_with_timepoints);
+        ImGui::SameLine();
         if (ImGui::Button("Make proper plot.")) {
-            plot_with_matplotpp(past_data, setting);
+            if (plot_with_timepoints) {
+                auto data_timepoints = past_data.get_past_timepoints();
+                plot_with_matplotpp_data_timepoints(data_timepoints, data, setting.get_what());
+            } else {
+                plot_with_matplotpp_data(data, setting.get_what());
+            }
         }
     } else {
         ImGui::Text("No results with given settings");
@@ -154,7 +237,7 @@ void show_results_imgui(const Score& score, float y_pos) {
     constexpr auto description_width = report_width - number_width;
 
     ImGui::SetNextWindowPos({800, y_pos});
-    ImGui::SetNextWindowSize({0,0});
+    ImGui::SetNextWindowSize({0, 0});
     ImGui::Begin("Current result:", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::Separator();
     ImGui::Text("%s", fmt::format("{0}\n", "Words").c_str());
@@ -262,7 +345,8 @@ int main() {
             show_results_imgui(past_score, imgui_stuff_y_pos);
             show_past_results_plot(past_data, imgui_stuff_y_pos);
             window.clear();
-            timer_display.set_time_s(timer.get_remaining_time_s(timer_current_task_id, test_duration));
+            timer_display.set_time_s(
+                timer.get_remaining_time_s(timer_current_task_id, test_duration));
             for (const auto& ptr_drawable : not_owning_drawables) {
                 window.draw(*ptr_drawable);
             }
@@ -332,10 +416,10 @@ int main() {
                     }
                 }
             }
-            
+
             // toggl visibility of the TimerDisplay
-            if (timer_display.hover(sf::Mouse::getPosition(window))){
-                if (event.type == sf::Event::MouseButtonPressed){
+            if (timer_display.hover(sf::Mouse::getPosition(window))) {
+                if (event.type == sf::Event::MouseButtonPressed) {
                     timer_display.toggl_visibility();
                     input_field.set_active(true);
                 }
