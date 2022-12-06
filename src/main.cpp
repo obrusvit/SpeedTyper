@@ -97,6 +97,7 @@ void setup_ImGui(sf::RenderWindow& window) {
 
 void show_settings(int* test_duration, bool* save_to_db, float y_pos) {
     ImGui::SetNextWindowPos({10, y_pos});
+    ImGui::SetNextWindowSize({200, 250});
     ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::DragInt("test time", test_duration, 1.0F, gameopt::seconds_limit_min,
                    gameopt::seconds_limit_max);
@@ -199,6 +200,7 @@ void show_past_results_plot(PastData& past_data, float y_pos) {
     static int item_current = 0;
     static bool plot_with_timepoints = false;
     ImGui::SetNextWindowPos({240, y_pos});
+    ImGui::SetNextWindowSize({500, 250});
     ImGui::Begin("Past results", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::DragInt("Number of results", &n_results, 1.0F, 0, 10'000);
     ImGui::DragIntRange2("Min/Max dur", &dur_min_max.at(0), &dur_min_max.at(1), 1.0F,
@@ -237,7 +239,7 @@ void show_results_imgui(const Score& score, float y_pos) {
     constexpr auto description_width = report_width - number_width;
 
     ImGui::SetNextWindowPos({800, y_pos});
-    ImGui::SetNextWindowSize({0, 0});
+    ImGui::SetNextWindowSize({200, 250});
     ImGui::Begin("Current result:", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::Separator();
     ImGui::Text("%s", fmt::format("{0}\n", "Words").c_str());
@@ -321,7 +323,8 @@ int main() {
         displayed_words.reset();
         input_field.reset();
         oss.str("");
-        timer.disable(timer_current_task_id);
+        /* timer.disable(timer_current_task_id); */
+        timer.disable_all();
         typer_status = SpeedTyperStatus::waiting_for_start;
         owning_drawables.clear();
     });

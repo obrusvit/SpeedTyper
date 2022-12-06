@@ -113,6 +113,13 @@ class Timer {
             id_2_active[id] = false;
         }
     }
+
+    auto disable_all() {
+        std::lock_guard<std::mutex> g{map_mutex};
+        for(auto& id : id_2_active){
+            id.second = false;
+        }
+    }
 };
 
 int Timer::last_id = 0;

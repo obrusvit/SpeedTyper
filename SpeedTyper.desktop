@@ -1,0 +1,9 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=SpeedTyper
+Exec=/home/obrusvit/repos/speed_typer/build/bin/speed_typer
+Path=/home/obrusvit/repos/speed_typer/build
+Icon=/home/obrusvit/repos/speed_typer/assets/icon.png
+Terminal=false
+Type=Application
+Categories=Application;
