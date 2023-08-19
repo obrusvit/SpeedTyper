@@ -84,12 +84,7 @@ class PastDataSetting {
     PastDataSetting(std::string s, int d_min, int d_max, int n_results)
         : what{std::move(s)}, dur_min{d_min}, dur_max{d_max}, num_of_results{n_results} {}
 
-    // FIXME GCC 9.3 refuses to compile defaulted version
-    /* bool operator==(const PastDataSetting&) const = default; */
-    bool operator==(const PastDataSetting& other) const {
-        return what == other.what && dur_max == other.dur_max && dur_min == other.dur_min &&
-               num_of_results == other.num_of_results;
-    }
+    bool operator==(const PastDataSetting&) const = default;
 
     bool operator!=(const PastDataSetting& other) const { return !(*this == other); }
 

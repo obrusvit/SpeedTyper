@@ -17,7 +17,6 @@
 #include <thread>
 #include <utility>
 
-#include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/Drawable.hpp"
 #include "SFML/Graphics/Shape.hpp"
 #include <SFML/Graphics/Font.hpp>

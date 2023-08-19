@@ -1,7 +1,6 @@
 #ifndef SPEED_TYPER_SFML_COMPONENTS
 #define SPEED_TYPER_SFML_COMPONENTS
 
-#include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/Drawable.hpp"
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"

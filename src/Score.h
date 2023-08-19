@@ -51,14 +51,7 @@ struct Score {
         return static_cast<double>(chars_correct) / (chars_correct + chars_bad);
     }
 
-    // FIXME gcc 9.3 fails to compile default version; gcc 10.0 or clang 10.0 can generate it
-    /* bool operator==(const Score&) const = default; */
-    bool operator==(const Score& other) const {
-        return words_correct == other.words_correct && words_bad == other.words_bad &&
-               chars_correct == other.chars_correct && chars_bad == other.chars_bad &&
-               backspaces == other.backspaces && spaces == other.spaces &&
-               key_presses == other.key_presses && test_duration == other.test_duration;
-    }
+    bool operator==(const Score&) const = default;
 
   private:
     static constexpr auto avg_word_len = 5;

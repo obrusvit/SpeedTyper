@@ -15,7 +15,6 @@ WordsProvider::WordsProvider()
 
 WordsProvider::WordsProvider(std::string filename)
     : _filename{std::move(filename)}
-    , _words{}
 {
     std::ifstream ifs{_filename};
     if(!ifs){

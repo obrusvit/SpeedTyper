@@ -1,11 +1,11 @@
 #include "../src/WordsProvider.h"
+#include "../include/constants.h"
 #include "../src/SfmlComponents.h"
 #include "../src/Timer.h"
 #include "SFML/Config.hpp"
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/System/Vector2.hpp"
-#include "../include/constants.h"
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <string>
@@ -23,12 +23,12 @@ TEST_CASE("Words provider works as intented.") {
         const std::string bad_filename = "../bad/path";
         const std::string bad_filename_error =
             fmt::format("Could not open file where words are supposed to be: {}", bad_filename);
-        REQUIRE_THROWS_WITH(WordsProvider{bad_filename}, bad_filename_error);
+        REQUIRE_THROWS(WordsProvider{bad_filename}, bad_filename_error);
 
         const std::string good_filename = "../assets/google-0-english.txt";
         const std::string good_filename_error =
             fmt::format("No words loaded from the file, check if there are any: {}", good_filename);
-        REQUIRE_THROWS_WITH(WordsProvider{good_filename}, good_filename_error);
+        REQUIRE_THROWS(WordsProvider{good_filename}, good_filename_error);
     }
     SECTION("Non-default WordsProvider with good file") {
         WordsProvider wp{"../assets/google-10000-english.txt"};

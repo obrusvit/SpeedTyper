@@ -12,17 +12,19 @@ I wanted to improve some skills and try a few packages, like
 * query SQL from C++ with sqlpp11, connected to SQLite3,
 * plotting with Matplot++,
 * testing with Catch2,
-* using other libraries: fmt, gsl, ...,
-* using CMake in combination with Conan to handle dependencies,
+* using other libraries: fmt
+* using CMake in combination with CPM to handle dependencies,
 * some goodies of newer C++ standards (compiled for C++20),
-while creating something fun and a little bit useful. I use this program almost daily. Some parts might be written in a slightly more complicated way, that's a feature.
+while creating something fun and a little bit useful. Some parts might be written in a slightly more complicated way, that's a feature.
 
 
 ## Compile and run.
+Some libraries might be needed for SFML (vorbis, freetype2, etc.). Install dev packages when build of dependencies fail (e.g. libvorbis-dev).
+
 Needed:
-* CMake 3.16
-* Conan (used with 1.28.1)
-* GCC >= 9.3., Clang >= 10 will do
+* CMake >= 3.16
+* CPM (included in cmake dir)
+* GCC >= 10.0, Clang >= 10 will do
 
 ```
 mkdir build
@@ -30,6 +32,3 @@ cd build
 cmake ../
 make
 ```
-
-`cmake` will handle conan.
-

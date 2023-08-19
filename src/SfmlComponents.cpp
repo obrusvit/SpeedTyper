@@ -1,11 +1,9 @@
 #include "SfmlComponents.h"
-#include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "constants.h"
 #include <chrono>
-#include <gsl/gsl-lite.hpp>
 #include <utility>
 #include <fmt/chrono.h>
 

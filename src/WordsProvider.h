@@ -21,7 +21,7 @@ public:
 private:
     [[nodiscard]] long unsigned int get_rand_idx_uniform() const;
 
-    const std::string _filename;
+    std::string _filename;
     std::vector<std::string> _words;
 };
 
